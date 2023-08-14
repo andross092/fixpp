@@ -1,5 +1,5 @@
 #include <DSTINCDIR/Fields.h>
-
+#include <vector>
 std::ostream & operator << ( std::ostream & os, const DSTNAMESPACE::sohstr & str )
 {
     for( const char * ptr = str.ptr; (unsigned)*ptr > FIXPP_SOH; ++ptr )
