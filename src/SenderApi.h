@@ -1,3 +1,4 @@
+#pragma once
 #include <DSTINCDIR/Messages.h>
 #include <cstring>
 #include <type_traits>
