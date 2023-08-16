@@ -80,47 +80,6 @@ inline int uintWidth( unsigned value )
     return 10;
 }
 
-int uintWidth2( unsigned value )
-{
-    if( value < 100000U )
-    {
-        if( value < 10U )
-        {
-            return 1;
-        }
-        if( value < 100U )
-        {
-            return 2;
-        }
-        if( value < 1000U )
-        {
-            return 3;
-        }
-        if( value < 10000U )
-        {
-            return 4;
-        }
-        return 5;
-    }
-    if( value < 1000000U )
-    {
-        return 6;
-    }
-    if( value < 10000000U )
-    {
-        return 7;
-    }
-    if( value < 100000000U )
-    {
-        return 8;
-    }
-    if( value < 1000000000U )
-    {
-        return 9;
-    }
-    return 10;
-}
-
 // suitable for seqnums and message length
 inline int smallUintWidth( unsigned value )
 {
