@@ -311,11 +311,15 @@ struct TimestampKeeper
         const std::time_t tnow = std::chrono::system_clock::to_time_t(now);
         if( tnow < startOfDay or tnow >= endOfDay )
         {
+            using namespace std::chrono;
+
             startOfDay = tnow - ( tnow % ( 3600 * 24 ) );
             endOfDay = startOfDay + 3600 * 24;
-            std::tm tm;
-            gmtime_r( & tnow, &tm );
-            std::strftime( begin, 64, "%Y%m%d-%H:%M:%S", &tm );
+
+            strncpy(begin, std::format("{:%Y%m%d}-{:%H:%M:%S}",
+                       year_month_day(time_point_cast<days>(now)),
+                       time_point_cast<milliseconds>(now)).c_str(),64);
+
         }
 
         unsigned diff = tnow - startOfDay;
