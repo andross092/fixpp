@@ -1,4 +1,8 @@
+__COPYRIGHT__
 #pragma once
+#ifndef DSTHEADERGUARD_SENDERAPI_H
+#define DSTHEADERGUARD_SENDERAPI_H
+
 #include <DSTINCDIR/Messages.h>
 #include <cstring>
 #include <type_traits>
@@ -535,8 +539,8 @@ struct ReusableMessageBuilder: FixBufferStream
     , lastSeqnumWidth    ( 0 )
     , lastBodyLengthWidth( 0 )
     , bufferGrowChunk    ( 1024 )
-    , header             ( headerTemplateCapacity, messageType )
     , msgType            ( messageType )
+    , header             ( headerTemplateCapacity, messageType )
     {
         begin = end = &buffer[0] + headerTemplateCapacity;
     }
@@ -585,7 +589,7 @@ struct ReusableMessageBuilder: FixBufferStream
     void resizeIfNecessary( unsigned valueLength )
     {
         valueLength += 8; // max "|tag=" length ?
-        auto endOffset = end - &buffer[0];
+        size_t endOffset = end - &buffer[0];
         if( endOffset + valueLength >= buffer.size() )
         {
             auto beginOffset = begin - &buffer[0];
