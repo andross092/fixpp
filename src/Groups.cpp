@@ -1,7 +1,7 @@
-#include <vector>
+
+__COPYRIGHT__
 
 #include <DSTINCDIR/Groups.h>
-
 
 namespace DSTNAMESPACE
 {

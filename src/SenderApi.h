@@ -80,6 +80,47 @@ inline int uintWidth( unsigned value )
     return 10;
 }
 
+inline int uintWidth2( unsigned value )
+{
+    if( value < 100000U )
+    {
+        if( value < 10U )
+        {
+            return 1;
+        }
+        if( value < 100U )
+        {
+            return 2;
+        }
+        if( value < 1000U )
+        {
+            return 3;
+        }
+        if( value < 10000U )
+        {
+            return 4;
+        }
+        return 5;
+    }
+    if( value < 1000000U )
+    {
+        return 6;
+    }
+    if( value < 10000000U )
+    {
+        return 7;
+    }
+    if( value < 100000000U )
+    {
+        return 8;
+    }
+    if( value < 1000000000U )
+    {
+        return 9;
+    }
+    return 10;
+}
+
 // suitable for seqnums and message length
 inline int smallUintWidth( unsigned value )
 {
@@ -124,6 +165,8 @@ inline char * reverseUIntToString( char * ptr, unsigned value, unsigned & chksum
     return ptr;
 }
 
+struct TimestampKeeper;
+
 struct FixBufferStream
 {
     FixBufferStream( char * buf ): begin{buf}, end{buf} {}
@@ -132,6 +175,14 @@ struct FixBufferStream
     FixBufferStream & pushTag()
     {
         end = insert<FIELD>(end);
+        return *this;
+    }
+
+    FixBufferStream & pushTag( unsigned tag )
+    {
+        *end++ = FIXPP_SOH;
+        pushValue( tag );
+        *end++ = '=';
         return *this;
     }
 
@@ -151,6 +202,20 @@ struct FixBufferStream
         return *this;
     }
 
+    FixBufferStream & pushValue( const std::string & src )
+    {
+        return pushValue( src.c_str(), src.size() );
+    }
+
+    FixBufferStream & pushValue( const sohstr & src )
+    {
+        for( const char * ptr = src.ptr; *ptr != FIXPP_SOH and *ptr; )
+        {
+            *end++ = *ptr++;
+        }
+        return *this;
+    }
+
     FixBufferStream & pushValue( char v )
     {
         *end++ = v;
@@ -158,6 +223,13 @@ struct FixBufferStream
     }
 
     FixBufferStream & pushValue( unsigned v )
+    {
+        end += uintWidth( v );
+        reverseUIntToString( end, v );
+        return *this;
+    }
+
+    FixBufferStream & pushValue( long unsigned v )
     {
         end += uintWidth( v );
         reverseUIntToString( end, v );
@@ -177,9 +249,13 @@ struct FixBufferStream
         return *this;
     }
 
-    // todo: negatives
     FixBufferStream & pushValue( double v, unsigned precision )
     {
+        if( v < 0 )
+        {
+            *end++ = '-';
+            v = -v;
+        }
         unsigned i = (unsigned)v;
         end += uintWidth( i );
         reverseUIntToString( end, i );
@@ -193,6 +269,8 @@ struct FixBufferStream
         }
         return *this;
     }
+
+    inline FixBufferStream & pushValue( TimestampKeeper & tk );
 
     template< typename FIELD >
     FixBufferStream & append( const char * v, unsigned len )
@@ -215,6 +293,13 @@ struct FixBufferStream
         return pushValue( v, precision );
     }
 
+    template< typename FIELD >
+    FixBufferStream & append( TimestampKeeper & v )
+    {
+        end = insert<FIELD>(end);
+        return pushValue( v );
+    }
+
     char * begin;
     char * end;
 };
@@ -230,10 +315,10 @@ struct FixBufferStream
 constexpr unsigned BODY_LENGTH_OFFSET = FixBeginStringInsertableTagLength + FieldBodyLength::INSERTABLE_TAG_WIDTH;
 struct HeaderTemplate: FixBufferStream
 {
-    HeaderTemplate( unsigned capacity, const std::string & msgType ):
-        FixBufferStream( nullptr ),
-        buffer( capacity, (char)0 ),
-        chksum( 0 )
+    HeaderTemplate( unsigned capacity, const std::string & msgType )
+    : FixBufferStream( nullptr )
+    , buffer( capacity, (char)0 )
+    , chksum( 0 )
     {
         begin = end = &buffer[0];
         end = insert<FieldBeginString>( end );
@@ -279,19 +364,40 @@ struct TimestampKeeper
     constexpr static unsigned DATE_TIME_NANOS_LENGTH   = 27;
     constexpr static const char * const PLACE_HOLDER = "11112233-44:55:66.777888999";
 
-    TimestampKeeper( char * buffer = nullptr, Precision secPrecision = Precision::SECONDS ):
-        startOfDay( 0 ),
-        endOfDay( 0 ),
-        begin( buffer ), 
-        lastSecond( 0 ),
-        lastFraction( 0 ),
-        secFraction( secPrecision )
+    inline unsigned length() const { return DATE_TIME_SECONDS_LENGTH + ( secFraction != Precision::SECONDS ? 1 : 0 ) + (unsigned)secFraction; }
+
+    TimestampKeeper( char * buffer = nullptr, Precision secPrecision = Precision::SECONDS )
+    : startOfDay  ( 0 )
+    , endOfDay    ( 0 )
+    , begin       ( buffer )
+    , lastSecond  ( 0 )
+    , lastFraction( 0 )
+    , secFraction ( secPrecision )
     {
     }
 
     unsigned getWidth() const
     {
         return DATE_TIME_SECONDS_LENGTH + 1 + (unsigned)secFraction;
+    }
+
+    unsigned fill( char * buffer, Precision secPrecision )
+    {
+        if( begin != buffer or secFraction != secPrecision )
+        {
+            begin = buffer;
+            secFraction = secPrecision;
+            startOfDay = 0;
+            endOfDay = 0;
+            lastSecond = 0;
+            lastFraction = 0;
+        }
+        if( buffer )
+        {
+            update();
+            return getWidth();
+        }
+        return 0;
     }
 
     unsigned setup( char * buffer, Precision secPrecision )
@@ -375,25 +481,62 @@ struct TimestampKeeper
     Precision secFraction;
 };
 
+FixBufferStream & FixBufferStream::pushValue( TimestampKeeper & tk )
+{
+    tk.fill( end, tk.secFraction );
+    end += tk.length();
+    return *this;
+}
+
+// basic types
+template< typename VALUE >
+constexpr unsigned valueMaxLength( const VALUE & v )
+{
+    return 16;
+}
+
+inline unsigned valueMaxLength( const std::string & v )
+{
+    return v.size();
+}
+
+inline unsigned valueMaxLength( const TimestampKeeper & v )
+{
+    return v.length();
+}
+
+inline unsigned valueMaxLength( const sohstr & v )
+{
+    offset_t pos = 0;
+    gotoNextField( v.ptr, pos );
+    return pos-1;
+}
+
+inline unsigned valueMaxLength( const char * & v )
+{
+    return strlen(v);
+}
+
 /*
 
 buffer   start                msgType                                    sendingTime                  body
 |        |                    |                                          |                            |
 "..."   "8=FIX.4.4" I "9=315" I "35=W" I "49=foo" I "56=bar" I "34=1234" I "52=20190101-01:01:01.000" I "..."
-                         ---                                       ----  |                            | 
+                         ---                                       ----  |                            |
                          | body length and seqno will be updated   |     begin                        end
 
 */
 struct ReusableMessageBuilder: FixBufferStream
 {
-    ReusableMessageBuilder( const std::string & messageType, unsigned maxBodyLength, unsigned headerTemplateCapacity = 128 ):
-        FixBufferStream( nullptr ),
-        buffer( maxBodyLength + 1, (char)0 ),
-        start( nullptr ),
-        lastSeqnumWidth( 0 ),
-        lastBodyLengthWidth( 0 ),
-        header( headerTemplateCapacity, messageType ),
-        msgType( messageType )
+    ReusableMessageBuilder( const std::string & messageType, unsigned maxBodyLength, unsigned headerTemplateCapacity = 128 )
+    : FixBufferStream    ( nullptr )
+    , buffer             ( maxBodyLength + 1, (char)0 )
+    , start              ( nullptr )
+    , lastSeqnumWidth    ( 0 )
+    , lastBodyLengthWidth( 0 )
+    , bufferGrowChunk    ( 1024 )
+    , header             ( headerTemplateCapacity, messageType )
+    , msgType            ( messageType )
     {
         begin = end = &buffer[0] + headerTemplateCapacity;
     }
@@ -438,12 +581,57 @@ struct ReusableMessageBuilder: FixBufferStream
         end = begin + pos;
     }
 
+    // start is not necessary to update here
+    void resizeIfNecessary( unsigned valueLength )
+    {
+        valueLength += 8; // max "|tag=" length ?
+        auto endOffset = end - &buffer[0];
+        if( endOffset + valueLength >= buffer.size() )
+        {
+            auto beginOffset = begin - &buffer[0];
+            buffer.resize( ( 1 + ( endOffset + valueLength ) / bufferGrowChunk ) * bufferGrowChunk );
+            begin = &buffer[0] + beginOffset;
+            end   = &buffer[0] + endOffset;
+        }
+    }
+
+    template< typename FIELD >
+    FixBufferStream & appendSafely( const char * v, unsigned len )
+    {
+        resizeIfNecessary( len );
+        end = insert<FIELD>(end);
+        return pushValue( v, len );
+    }
+
+    template< typename FIELD, typename VALUE >
+    FixBufferStream & appendSafely( const VALUE & v )
+    {
+        resizeIfNecessary( valueMaxLength(v) );
+        end = insert<FIELD>(end);
+        return pushValue( v );
+    }
+
+    template< typename FIELD >
+    FixBufferStream & appendSafely( double v, unsigned precision )
+    {
+        resizeIfNecessary( 16 ); // formatted floating point max length ?
+        end = insert<FIELD>(end);
+        return pushValue( v, precision );
+    }
+
+    const std::string             msgType;
     std::vector<char>             buffer;
     char                        * start;
     unsigned                      lastSeqnumWidth, lastBodyLengthWidth;
+    unsigned                      bufferGrowChunk;
     HeaderTemplate                header;
     TimestampKeeper               sendingTime;
-    const std::string             msgType;
+    TimestampKeeper               userTime1;
+    TimestampKeeper               userTime2;
+    TimestampKeeper               userTime3;
+    TimestampKeeper               userTime4;
 };
 
 }
+
+#endif // DSTHEADERGUARD_SENDERAPI_H
