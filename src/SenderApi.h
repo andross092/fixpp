@@ -534,12 +534,12 @@ struct ReusableMessageBuilder: FixBufferStream
 {
     ReusableMessageBuilder( const std::string & messageType, unsigned maxBodyLength, unsigned headerTemplateCapacity = 128 )
     : FixBufferStream    ( nullptr )
-    , buffer             ( maxBodyLength + 1, (char)0 )
-    , start              ( nullptr )
-    , lastSeqnumWidth    ( 0 )
-    , lastBodyLengthWidth( 0 )
-    , bufferGrowChunk    ( 1024 )
-    , msgType            ( messageType )
+        , msgType            ( messageType )
+        , buffer             ( maxBodyLength + 1, (char)0 )
+        , start              ( nullptr )
+        , lastSeqnumWidth    ( 0 )
+        , lastBodyLengthWidth( 0 )
+        , bufferGrowChunk    ( 1024 )
     , header             ( headerTemplateCapacity, messageType )
     {
         begin = end = &buffer[0] + headerTemplateCapacity;
