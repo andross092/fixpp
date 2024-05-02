@@ -430,7 +430,6 @@ struct TimestampKeeper
         {
             startOfDay = tpt - ( tpt % ( 3600 * 24 ) );
             endOfDay = startOfDay + 3600 * 24;
-            std::tm tm;
             using namespace std::chrono;
 
             strncpy(begin, std::format("{:%Y%m%d}-{:%H:%M:%S}",

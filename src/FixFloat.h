@@ -394,7 +394,7 @@ inline DSTNAMESPACE::Float operator "" _ff( long double q )
 #if __arm__ == 1
 #define FIXPP_OP_TYPE unsigned int
 #else
-#define FIXPP_OP_TYPE unsigned long
+#define FIXPP_OP_TYPE unsigned long long
 #endif
 
 inline DSTNAMESPACE::Float operator "" _ff( const char * ptr, FIXPP_OP_TYPE )
