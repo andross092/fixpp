@@ -58,7 +58,7 @@ class Float
         constexpr Float( V real, Dot dotPos = DEFAULT_PRECISION )
         : _int{ Int( real * uintPow10[dotPos] ) }
         , _dot{ dotPos }
-        , _flags{ dotPos > MAX_DIGITS or std::abs(real * uintPow10[dotPos]) > MAX_DOUBLE_VALUE ? Flag::OVERFLOW : Flag::CLEAR }
+        , _flags{ dotPos > MAX_DIGITS or std::abs(real * uintPow10[dotPos]) > MAX_DOUBLE_VALUE ? Flag::OVER_FLOW : Flag::CLEAR }
         {
         }
 
@@ -279,7 +279,7 @@ class Float
 
         bool isOverflow() const
         {
-            return isFlagSet<Flag::OVERFLOW>();
+            return isFlagSet<Flag::OVER_FLOW>();
         }
 
         bool isInfinite() const

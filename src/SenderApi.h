@@ -431,9 +431,12 @@ struct TimestampKeeper
             startOfDay = tpt - ( tpt % ( 3600 * 24 ) );
             endOfDay = startOfDay + 3600 * 24;
             std::tm tm;
-            gmtime_r( &tpt, &tm );
-            std::strftime( begin, 64, "%Y%m%d-%H:%M:%S", &tm );
-        }
+            using namespace std::chrono;
+
+            strncpy(begin, std::format("{:%Y%m%d}-{:%H:%M:%S}",
+                       year_month_day(time_point_cast<days>(tp)),
+                       time_point_cast<milliseconds>(tp)).c_str(),64);
+         }
 
         unsigned diff = tpt - startOfDay;
         if( lastSecond != diff )

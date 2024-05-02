@@ -23,7 +23,7 @@ void Float::parse( const char * ptr )
     {
         if( intlen > MAX_DIGITS )
         {
-            setFlag<Flag::OVERFLOW>();
+            setFlag<Flag::OVER_FLOW>();
         }
         if( intlen == 0 )
         {
@@ -38,7 +38,7 @@ void Float::parse( const char * ptr )
     _dot = mantissaLength;
     if( intlen + mantissaLength > MAX_DIGITS )
     {
-        setFlag<Flag::OVERFLOW>();
+        setFlag<Flag::OVER_FLOW>();
     }
 }
 
@@ -47,7 +47,7 @@ std::string Float::toString( bool withDetails ) const
     std::string result;
     if( _flags != Flag::CLEAR )
     {
-        if( isFlagSet<Flag::OVERFLOW>() )
+        if( isFlagSet<Flag::OVER_FLOW>() )
         {
             result.append( "Ovf" );
         }
@@ -181,7 +181,7 @@ Float Float::plus( const Float & other ) const
         sum = myValue + otherValue;
         if( overflow or ( wasSameSign and not areOfSameSign( _int, sum ) ) )
         {
-            res.setFlag<Flag::OVERFLOW>();
+            res.setFlag<Flag::OVER_FLOW>();
         }
         else
         {
@@ -203,7 +203,7 @@ Float Float::mul( const Float & other ) const
     Float res{ intRes, newDot };
     if( intRes != 0 and intRes / right._int != left._int )
     {
-        res.setFlag<Flag::OVERFLOW>();
+        res.setFlag<Flag::OVER_FLOW>();
     }
     else if( newDot > OP_PRECISION )
     {
@@ -253,7 +253,7 @@ Float Float::div( const Float & other ) const
     }
     if( div > MAX_VALUE )
     {
-        return Float( Flag::OVERFLOW );
+        return Float( Flag::OVER_FLOW );
     }
     Float res( (Int)div, newDot );
     return res.squeeze();
