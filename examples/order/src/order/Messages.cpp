@@ -45,529 +45,6 @@ const std::string & MessageExecutionReport::getMessageType(){
 }
 
 
-// -------------------------------------- scan ----------------------------------------
-
-offset_t MessageHeader::scan( const char * fix, unsigned len ){
-buf = fix; 
-offset_t prev = 0, pos = 0; 
-while( pos < (int)len ) {
-   bool isGroupStart = false;
-   prev = pos;
-   raw_tag_t tag = nextRawTag( fix+pos, pos );
-   switch( tag ){
-
-   case FieldBeginString::RAW :
-     FIXPP_PRINT_FIELD(BeginString) 
-     fieldBeginString.offset = pos;
-     break;
-
-   case FieldBodyLength::RAW :
-     FIXPP_PRINT_FIELD(BodyLength) 
-     fieldBodyLength.offset = pos;
-     break;
-
-   case FieldMsgType::RAW :
-     FIXPP_PRINT_FIELD(MsgType) 
-     fieldMsgType.offset = pos;
-     break;
-
-   case FieldSenderCompID::RAW :
-     FIXPP_PRINT_FIELD(SenderCompID) 
-     fieldSenderCompID.offset = pos;
-     break;
-
-   case FieldTargetCompID::RAW :
-     FIXPP_PRINT_FIELD(TargetCompID) 
-     fieldTargetCompID.offset = pos;
-     break;
-
-   case FieldMsgSeqNum::RAW :
-     FIXPP_PRINT_FIELD(MsgSeqNum) 
-     fieldMsgSeqNum.offset = pos;
-     break;
-
-   case FieldSendingTime::RAW :
-     FIXPP_PRINT_FIELD(SendingTime) 
-     fieldSendingTime.offset = pos;
-     break;
-
-   case FieldCheckSum::RAW :
-     FIXPP_PRINT_FIELD(CheckSum) 
-     fieldCheckSum.offset = pos;
-     gotoNextField( fix, pos );
-     return pos; 
-
-   default: FIXPP_PRINT_UNKNOWN_FIELD
-     return prev;
-   }
-   if( ! isGroupStart ) gotoNextField( fix, pos );
- }
- return pos;
-}
-
-offset_t MessageNewOrderSingle::scan( const char * fix, unsigned len ){
-buf = fix; 
-offset_t prev = 0, pos = 0; 
-while( pos < (int)len ) {
-   bool isGroupStart = false;
-   prev = pos;
-   raw_tag_t tag = nextRawTag( fix+pos, pos );
-   switch( tag ){
-
-   case FieldClOrdID::RAW :
-     FIXPP_PRINT_FIELD(ClOrdID) 
-     fieldClOrdID.offset = pos;
-     break;
-
-   case FieldAccount::RAW :
-     FIXPP_PRINT_FIELD(Account) 
-     fieldAccount.offset = pos;
-     break;
-
-   case FieldSymbol::RAW :
-     FIXPP_PRINT_FIELD(Symbol) 
-     fieldSymbol.offset = pos;
-     break;
-
-   case FieldSecurityID::RAW :
-     FIXPP_PRINT_FIELD(SecurityID) 
-     fieldSecurityID.offset = pos;
-     break;
-
-   case FieldSide::RAW :
-     FIXPP_PRINT_FIELD(Side) 
-     fieldSide.offset = pos;
-     break;
-
-   case FieldQtyType::RAW :
-     FIXPP_PRINT_FIELD(QtyType) 
-     fieldQtyType.offset = pos;
-     break;
-
-   case FieldOrderQty::RAW :
-     FIXPP_PRINT_FIELD(OrderQty) 
-     fieldOrderQty.offset = pos;
-     break;
-
-   case FieldOrdType::RAW :
-     FIXPP_PRINT_FIELD(OrdType) 
-     fieldOrdType.offset = pos;
-     break;
-
-   case FieldPrice::RAW :
-     FIXPP_PRINT_FIELD(Price) 
-     fieldPrice.offset = pos;
-     break;
-
-   case FieldStopPx::RAW :
-     FIXPP_PRINT_FIELD(StopPx) 
-     fieldStopPx.offset = pos;
-     break;
-
-   case FieldTransactTime::RAW :
-     FIXPP_PRINT_FIELD(TransactTime) 
-     fieldTransactTime.offset = pos;
-     break;
-
-   case FieldCheckSum::RAW :
-     FIXPP_PRINT_FIELD(CheckSum) 
-     fieldCheckSum.offset = pos;
-     gotoNextField( fix, pos );
-     return pos; 
-
-   default: FIXPP_PRINT_UNKNOWN_FIELD
-     return prev;
-   }
-   if( ! isGroupStart ) gotoNextField( fix, pos );
- }
- return pos;
-}
-
-offset_t MessageExecutionReport::scan( const char * fix, unsigned len ){
-buf = fix; 
-offset_t prev = 0, pos = 0; 
-while( pos < (int)len ) {
-   bool isGroupStart = false;
-   prev = pos;
-   raw_tag_t tag = nextRawTag( fix+pos, pos );
-   switch( tag ){
-
-   case FieldOrderID::RAW :
-     FIXPP_PRINT_FIELD(OrderID) 
-     fieldOrderID.offset = pos;
-     break;
-
-   case FieldClOrdID::RAW :
-     FIXPP_PRINT_FIELD(ClOrdID) 
-     fieldClOrdID.offset = pos;
-     break;
-
-   case FieldOrigClOrdID::RAW :
-     FIXPP_PRINT_FIELD(OrigClOrdID) 
-     fieldOrigClOrdID.offset = pos;
-     break;
-
-   case FieldExecID::RAW :
-     FIXPP_PRINT_FIELD(ExecID) 
-     fieldExecID.offset = pos;
-     break;
-
-   case FieldExecType::RAW :
-     FIXPP_PRINT_FIELD(ExecType) 
-     fieldExecType.offset = pos;
-     break;
-
-   case FieldOrdStatus::RAW :
-     FIXPP_PRINT_FIELD(OrdStatus) 
-     fieldOrdStatus.offset = pos;
-     break;
-
-   case FieldOrdRejReason::RAW :
-     FIXPP_PRINT_FIELD(OrdRejReason) 
-     fieldOrdRejReason.offset = pos;
-     break;
-
-   case FieldAccount::RAW :
-     FIXPP_PRINT_FIELD(Account) 
-     fieldAccount.offset = pos;
-     break;
-
-   case FieldSymbol::RAW :
-     FIXPP_PRINT_FIELD(Symbol) 
-     fieldSymbol.offset = pos;
-     break;
-
-   case FieldSecurityID::RAW :
-     FIXPP_PRINT_FIELD(SecurityID) 
-     fieldSecurityID.offset = pos;
-     break;
-
-   case FieldSecurityType::RAW :
-     FIXPP_PRINT_FIELD(SecurityType) 
-     fieldSecurityType.offset = pos;
-     break;
-
-   case FieldText::RAW :
-     FIXPP_PRINT_FIELD(Text) 
-     fieldText.offset = pos;
-     break;
-
-   case FieldProduct::RAW :
-     FIXPP_PRINT_FIELD(Product) 
-     fieldProduct.offset = pos;
-     break;
-
-   case FieldSide::RAW :
-     FIXPP_PRINT_FIELD(Side) 
-     fieldSide.offset = pos;
-     break;
-
-   case FieldQtyType::RAW :
-     FIXPP_PRINT_FIELD(QtyType) 
-     fieldQtyType.offset = pos;
-     break;
-
-   case FieldOrderQty::RAW :
-     FIXPP_PRINT_FIELD(OrderQty) 
-     fieldOrderQty.offset = pos;
-     break;
-
-   case FieldOrdType::RAW :
-     FIXPP_PRINT_FIELD(OrdType) 
-     fieldOrdType.offset = pos;
-     break;
-
-   case FieldPriceType::RAW :
-     FIXPP_PRINT_FIELD(PriceType) 
-     fieldPriceType.offset = pos;
-     break;
-
-   case FieldPrice::RAW :
-     FIXPP_PRINT_FIELD(Price) 
-     fieldPrice.offset = pos;
-     break;
-
-   case FieldStopPx::RAW :
-     FIXPP_PRINT_FIELD(StopPx) 
-     fieldStopPx.offset = pos;
-     break;
-
-   case FieldCurrency::RAW :
-     FIXPP_PRINT_FIELD(Currency) 
-     fieldCurrency.offset = pos;
-     break;
-
-   case FieldTimeInForce::RAW :
-     FIXPP_PRINT_FIELD(TimeInForce) 
-     fieldTimeInForce.offset = pos;
-     break;
-
-   case FieldExecInst::RAW :
-     FIXPP_PRINT_FIELD(ExecInst) 
-     fieldExecInst.offset = pos;
-     break;
-
-   case FieldLastQty::RAW :
-     FIXPP_PRINT_FIELD(LastQty) 
-     fieldLastQty.offset = pos;
-     break;
-
-   case FieldLastPx::RAW :
-     FIXPP_PRINT_FIELD(LastPx) 
-     fieldLastPx.offset = pos;
-     break;
-
-   case FieldLeavesQty::RAW :
-     FIXPP_PRINT_FIELD(LeavesQty) 
-     fieldLeavesQty.offset = pos;
-     break;
-
-   case FieldAvgPx::RAW :
-     FIXPP_PRINT_FIELD(AvgPx) 
-     fieldAvgPx.offset = pos;
-     break;
-
-   case FieldCumQty::RAW :
-     FIXPP_PRINT_FIELD(CumQty) 
-     fieldCumQty.offset = pos;
-     break;
-
-   case FieldNoLegs::RAW :
-     FIXPP_PRINT_FIELD(NoLegs) 
-     fieldNoLegs.offset = pos;
-     isGroupStart = true;
-     gotoNextField( fix, pos );
-     pos += GroupLegs::scan( groupsLegs, fix+pos, len - pos );
-     break;
-
-   case FieldCheckSum::RAW :
-     FIXPP_PRINT_FIELD(CheckSum) 
-     fieldCheckSum.offset = pos;
-     gotoNextField( fix, pos );
-     return pos; 
-
-   default: FIXPP_PRINT_UNKNOWN_FIELD
-     return prev;
-   }
-   if( ! isGroupStart ) gotoNextField( fix, pos );
- }
- return pos;
-}
-
-
-// -------------------------------------- skip ----------------------------------------
-
-offset_t MessageHeader::skip( const char * fix, unsigned len ) const
-{
-offset_t prev = 0, pos = 0; 
-gotoNextField( fix, pos );
-while( pos < (int)len ) {
-   bool isGroupStart = false;
-   prev = pos;
-   raw_tag_t tag = nextRawTag( fix+pos, pos );
-   switch( tag ){
-
-   case FieldBeginString::RAW :
-     break;
-
-   case FieldBodyLength::RAW :
-     break;
-
-   case FieldMsgType::RAW :
-     break;
-
-   case FieldSenderCompID::RAW :
-     break;
-
-   case FieldTargetCompID::RAW :
-     break;
-
-   case FieldMsgSeqNum::RAW :
-     break;
-
-   case FieldSendingTime::RAW :
-     break;
-
-   case FieldCheckSum::RAW :
-     gotoNextField( fix, pos );
-     return pos;
-
-   default: FIXPP_PRINT_UNKNOWN_FIELD
-     return prev;
-   }
-   if( ! isGroupStart ) gotoNextField( fix, pos );
- }
- return pos;
-}
-
-offset_t MessageNewOrderSingle::skip( const char * fix, unsigned len ) const
-{
-offset_t prev = 0, pos = 0; 
-gotoNextField( fix, pos );
-while( pos < (int)len ) {
-   bool isGroupStart = false;
-   prev = pos;
-   raw_tag_t tag = nextRawTag( fix+pos, pos );
-   switch( tag ){
-
-   case FieldClOrdID::RAW :
-     break;
-
-   case FieldAccount::RAW :
-     break;
-
-   case FieldSymbol::RAW :
-     break;
-
-   case FieldSecurityID::RAW :
-     break;
-
-   case FieldSide::RAW :
-     break;
-
-   case FieldQtyType::RAW :
-     break;
-
-   case FieldOrderQty::RAW :
-     break;
-
-   case FieldOrdType::RAW :
-     break;
-
-   case FieldPrice::RAW :
-     break;
-
-   case FieldStopPx::RAW :
-     break;
-
-   case FieldTransactTime::RAW :
-     break;
-
-   case FieldCheckSum::RAW :
-     gotoNextField( fix, pos );
-     return pos;
-
-   default: FIXPP_PRINT_UNKNOWN_FIELD
-     return prev;
-   }
-   if( ! isGroupStart ) gotoNextField( fix, pos );
- }
- return pos;
-}
-
-offset_t MessageExecutionReport::skip( const char * fix, unsigned len ) const
-{
-offset_t prev = 0, pos = 0; 
-gotoNextField( fix, pos );
-while( pos < (int)len ) {
-   bool isGroupStart = false;
-   prev = pos;
-   raw_tag_t tag = nextRawTag( fix+pos, pos );
-   switch( tag ){
-
-   case FieldOrderID::RAW :
-     break;
-
-   case FieldClOrdID::RAW :
-     break;
-
-   case FieldOrigClOrdID::RAW :
-     break;
-
-   case FieldExecID::RAW :
-     break;
-
-   case FieldExecType::RAW :
-     break;
-
-   case FieldOrdStatus::RAW :
-     break;
-
-   case FieldOrdRejReason::RAW :
-     break;
-
-   case FieldAccount::RAW :
-     break;
-
-   case FieldSymbol::RAW :
-     break;
-
-   case FieldSecurityID::RAW :
-     break;
-
-   case FieldSecurityType::RAW :
-     break;
-
-   case FieldText::RAW :
-     break;
-
-   case FieldProduct::RAW :
-     break;
-
-   case FieldSide::RAW :
-     break;
-
-   case FieldQtyType::RAW :
-     break;
-
-   case FieldOrderQty::RAW :
-     break;
-
-   case FieldOrdType::RAW :
-     break;
-
-   case FieldPriceType::RAW :
-     break;
-
-   case FieldPrice::RAW :
-     break;
-
-   case FieldStopPx::RAW :
-     break;
-
-   case FieldCurrency::RAW :
-     break;
-
-   case FieldTimeInForce::RAW :
-     break;
-
-   case FieldExecInst::RAW :
-     break;
-
-   case FieldLastQty::RAW :
-     break;
-
-   case FieldLastPx::RAW :
-     break;
-
-   case FieldLeavesQty::RAW :
-     break;
-
-   case FieldAvgPx::RAW :
-     break;
-
-   case FieldCumQty::RAW :
-     break;
-
-   case FieldNoLegs::RAW :
-     isGroupStart = true;
-     gotoNextField( fix, pos );
-     pos += GroupLegs::skip( fix+pos, len - pos );
-     break;
-
-   case FieldCheckSum::RAW :
-     gotoNextField( fix, pos );
-     return pos;
-
-   default: FIXPP_PRINT_UNKNOWN_FIELD
-     return prev;
-   }
-   if( ! isGroupStart ) gotoNextField( fix, pos );
- }
- return pos;
-}
-
-
 // ---------------------------------- fields ---------------------------------
 
 GetDepthMethod MessageHeader::groupGetDepthMethods[] = {
@@ -584,14 +61,14 @@ GetDepthMethod MessageExecutionReport::groupGetDepthMethods[] = {
 FieldDepth MessageHeader::getFieldDepth( raw_tag_t tag ){
    FieldDepth ret;
    switch( tag ){
-     case FieldBeginString::RAW :
-     case FieldBodyLength::RAW :
-     case FieldMsgType::RAW :
-     case FieldSenderCompID::RAW :
-     case FieldTargetCompID::RAW :
-     case FieldMsgSeqNum::RAW :
-     case FieldSendingTime::RAW :
-     case FieldCheckSum::RAW :
+     case FieldBeginString::RAW_TAG :
+     case FieldBodyLength::RAW_TAG :
+     case FieldMsgType::RAW_TAG :
+     case FieldSenderCompID::RAW_TAG :
+     case FieldTargetCompID::RAW_TAG :
+     case FieldMsgSeqNum::RAW_TAG :
+     case FieldSendingTime::RAW_TAG :
+     case FieldCheckSum::RAW_TAG :
      ret.depth = 0; 
      return ret; 
    }
@@ -605,18 +82,18 @@ FieldDepth MessageHeader::getFieldDepth( raw_tag_t tag ){
 FieldDepth MessageNewOrderSingle::getFieldDepth( raw_tag_t tag ){
    FieldDepth ret;
    switch( tag ){
-     case FieldClOrdID::RAW :
-     case FieldAccount::RAW :
-     case FieldSymbol::RAW :
-     case FieldSecurityID::RAW :
-     case FieldSide::RAW :
-     case FieldQtyType::RAW :
-     case FieldOrderQty::RAW :
-     case FieldOrdType::RAW :
-     case FieldPrice::RAW :
-     case FieldStopPx::RAW :
-     case FieldTransactTime::RAW :
-     case FieldCheckSum::RAW :
+     case FieldClOrdID::RAW_TAG :
+     case FieldAccount::RAW_TAG :
+     case FieldSymbol::RAW_TAG :
+     case FieldSecurityID::RAW_TAG :
+     case FieldSide::RAW_TAG :
+     case FieldQtyType::RAW_TAG :
+     case FieldOrderQty::RAW_TAG :
+     case FieldOrdType::RAW_TAG :
+     case FieldPrice::RAW_TAG :
+     case FieldStopPx::RAW_TAG :
+     case FieldTransactTime::RAW_TAG :
+     case FieldCheckSum::RAW_TAG :
      ret.depth = 0; 
      return ret; 
    }
@@ -630,36 +107,36 @@ FieldDepth MessageNewOrderSingle::getFieldDepth( raw_tag_t tag ){
 FieldDepth MessageExecutionReport::getFieldDepth( raw_tag_t tag ){
    FieldDepth ret;
    switch( tag ){
-     case FieldOrderID::RAW :
-     case FieldClOrdID::RAW :
-     case FieldOrigClOrdID::RAW :
-     case FieldExecID::RAW :
-     case FieldExecType::RAW :
-     case FieldOrdStatus::RAW :
-     case FieldOrdRejReason::RAW :
-     case FieldAccount::RAW :
-     case FieldSymbol::RAW :
-     case FieldSecurityID::RAW :
-     case FieldSecurityType::RAW :
-     case FieldText::RAW :
-     case FieldProduct::RAW :
-     case FieldSide::RAW :
-     case FieldQtyType::RAW :
-     case FieldOrderQty::RAW :
-     case FieldOrdType::RAW :
-     case FieldPriceType::RAW :
-     case FieldPrice::RAW :
-     case FieldStopPx::RAW :
-     case FieldCurrency::RAW :
-     case FieldTimeInForce::RAW :
-     case FieldExecInst::RAW :
-     case FieldLastQty::RAW :
-     case FieldLastPx::RAW :
-     case FieldLeavesQty::RAW :
-     case FieldAvgPx::RAW :
-     case FieldCumQty::RAW :
-     case FieldNoLegs::RAW :
-     case FieldCheckSum::RAW :
+     case FieldOrderID::RAW_TAG :
+     case FieldClOrdID::RAW_TAG :
+     case FieldOrigClOrdID::RAW_TAG :
+     case FieldExecID::RAW_TAG :
+     case FieldExecType::RAW_TAG :
+     case FieldOrdStatus::RAW_TAG :
+     case FieldOrdRejReason::RAW_TAG :
+     case FieldAccount::RAW_TAG :
+     case FieldSymbol::RAW_TAG :
+     case FieldSecurityID::RAW_TAG :
+     case FieldSecurityType::RAW_TAG :
+     case FieldText::RAW_TAG :
+     case FieldProduct::RAW_TAG :
+     case FieldSide::RAW_TAG :
+     case FieldQtyType::RAW_TAG :
+     case FieldOrderQty::RAW_TAG :
+     case FieldOrdType::RAW_TAG :
+     case FieldPriceType::RAW_TAG :
+     case FieldPrice::RAW_TAG :
+     case FieldStopPx::RAW_TAG :
+     case FieldCurrency::RAW_TAG :
+     case FieldTimeInForce::RAW_TAG :
+     case FieldExecInst::RAW_TAG :
+     case FieldLastQty::RAW_TAG :
+     case FieldLastPx::RAW_TAG :
+     case FieldLeavesQty::RAW_TAG :
+     case FieldAvgPx::RAW_TAG :
+     case FieldCumQty::RAW_TAG :
+     case FieldNoLegs::RAW_TAG :
+     case FieldCheckSum::RAW_TAG :
      ret.depth = 0; 
      return ret; 
    }
@@ -671,138 +148,141 @@ FieldDepth MessageExecutionReport::getFieldDepth( raw_tag_t tag ){
 }
 
 
+// ---------------------------------- getFieldValue ---------------------------------
+
 const char * MessageHeader::getFieldValue( unsigned tag ) const {
-   if( buf == nullptr ) return nullptr;
+   if( _fixPtr == nullptr ) return nullptr;
    switch( tag ){
-     case FieldBeginString::KEY : return fieldBeginString.offset >= 0 ? buf + fieldBeginString.offset : nullptr;
-     case FieldBodyLength::KEY : return fieldBodyLength.offset >= 0 ? buf + fieldBodyLength.offset : nullptr;
-     case FieldMsgType::KEY : return fieldMsgType.offset >= 0 ? buf + fieldMsgType.offset : nullptr;
-     case FieldSenderCompID::KEY : return fieldSenderCompID.offset >= 0 ? buf + fieldSenderCompID.offset : nullptr;
-     case FieldTargetCompID::KEY : return fieldTargetCompID.offset >= 0 ? buf + fieldTargetCompID.offset : nullptr;
-     case FieldMsgSeqNum::KEY : return fieldMsgSeqNum.offset >= 0 ? buf + fieldMsgSeqNum.offset : nullptr;
-     case FieldSendingTime::KEY : return fieldSendingTime.offset >= 0 ? buf + fieldSendingTime.offset : nullptr;
-     case FieldCheckSum::KEY : return fieldCheckSum.offset >= 0 ? buf + fieldCheckSum.offset : nullptr; 
+     case FieldBeginString::TAG : return fieldBeginString.offset > 0 ? _fixPtr + fieldBeginString.offset : nullptr;
+     case FieldBodyLength::TAG : return fieldBodyLength.offset > 0 ? _fixPtr + fieldBodyLength.offset : nullptr;
+     case FieldMsgType::TAG : return fieldMsgType.offset > 0 ? _fixPtr + fieldMsgType.offset : nullptr;
+     case FieldSenderCompID::TAG : return fieldSenderCompID.offset > 0 ? _fixPtr + fieldSenderCompID.offset : nullptr;
+     case FieldTargetCompID::TAG : return fieldTargetCompID.offset > 0 ? _fixPtr + fieldTargetCompID.offset : nullptr;
+     case FieldMsgSeqNum::TAG : return fieldMsgSeqNum.offset > 0 ? _fixPtr + fieldMsgSeqNum.offset : nullptr;
+     case FieldSendingTime::TAG : return fieldSendingTime.offset > 0 ? _fixPtr + fieldSendingTime.offset : nullptr;
+     case FieldCheckSum::TAG : return fieldCheckSum.offset > 0 ? _fixPtr + fieldCheckSum.offset : nullptr; 
      default : return nullptr; 
    }
    return nullptr;
 }
 
 const char * MessageNewOrderSingle::getFieldValue( unsigned tag ) const {
-   if( buf == nullptr ) return nullptr;
+   if( _fixPtr == nullptr ) return nullptr;
    switch( tag ){
-     case FieldClOrdID::KEY : return fieldClOrdID.offset >= 0 ? buf + fieldClOrdID.offset : nullptr;
-     case FieldAccount::KEY : return fieldAccount.offset >= 0 ? buf + fieldAccount.offset : nullptr;
-     case FieldSymbol::KEY : return fieldSymbol.offset >= 0 ? buf + fieldSymbol.offset : nullptr;
-     case FieldSecurityID::KEY : return fieldSecurityID.offset >= 0 ? buf + fieldSecurityID.offset : nullptr;
-     case FieldSide::KEY : return fieldSide.offset >= 0 ? buf + fieldSide.offset : nullptr;
-     case FieldQtyType::KEY : return fieldQtyType.offset >= 0 ? buf + fieldQtyType.offset : nullptr;
-     case FieldOrderQty::KEY : return fieldOrderQty.offset >= 0 ? buf + fieldOrderQty.offset : nullptr;
-     case FieldOrdType::KEY : return fieldOrdType.offset >= 0 ? buf + fieldOrdType.offset : nullptr;
-     case FieldPrice::KEY : return fieldPrice.offset >= 0 ? buf + fieldPrice.offset : nullptr;
-     case FieldStopPx::KEY : return fieldStopPx.offset >= 0 ? buf + fieldStopPx.offset : nullptr;
-     case FieldTransactTime::KEY : return fieldTransactTime.offset >= 0 ? buf + fieldTransactTime.offset : nullptr;
-     case FieldCheckSum::KEY : return fieldCheckSum.offset >= 0 ? buf + fieldCheckSum.offset : nullptr; 
+     case FieldClOrdID::TAG : return fieldClOrdID.offset > 0 ? _fixPtr + fieldClOrdID.offset : nullptr;
+     case FieldAccount::TAG : return fieldAccount.offset > 0 ? _fixPtr + fieldAccount.offset : nullptr;
+     case FieldSymbol::TAG : return fieldSymbol.offset > 0 ? _fixPtr + fieldSymbol.offset : nullptr;
+     case FieldSecurityID::TAG : return fieldSecurityID.offset > 0 ? _fixPtr + fieldSecurityID.offset : nullptr;
+     case FieldSide::TAG : return fieldSide.offset > 0 ? _fixPtr + fieldSide.offset : nullptr;
+     case FieldQtyType::TAG : return fieldQtyType.offset > 0 ? _fixPtr + fieldQtyType.offset : nullptr;
+     case FieldOrderQty::TAG : return fieldOrderQty.offset > 0 ? _fixPtr + fieldOrderQty.offset : nullptr;
+     case FieldOrdType::TAG : return fieldOrdType.offset > 0 ? _fixPtr + fieldOrdType.offset : nullptr;
+     case FieldPrice::TAG : return fieldPrice.offset > 0 ? _fixPtr + fieldPrice.offset : nullptr;
+     case FieldStopPx::TAG : return fieldStopPx.offset > 0 ? _fixPtr + fieldStopPx.offset : nullptr;
+     case FieldTransactTime::TAG : return fieldTransactTime.offset > 0 ? _fixPtr + fieldTransactTime.offset : nullptr;
+     case FieldCheckSum::TAG : return fieldCheckSum.offset > 0 ? _fixPtr + fieldCheckSum.offset : nullptr; 
      default : return nullptr; 
    }
    return nullptr;
 }
 
 const char * MessageExecutionReport::getFieldValue( unsigned tag ) const {
-   if( buf == nullptr ) return nullptr;
+   if( _fixPtr == nullptr ) return nullptr;
    switch( tag ){
-     case FieldOrderID::KEY : return fieldOrderID.offset >= 0 ? buf + fieldOrderID.offset : nullptr;
-     case FieldClOrdID::KEY : return fieldClOrdID.offset >= 0 ? buf + fieldClOrdID.offset : nullptr;
-     case FieldOrigClOrdID::KEY : return fieldOrigClOrdID.offset >= 0 ? buf + fieldOrigClOrdID.offset : nullptr;
-     case FieldExecID::KEY : return fieldExecID.offset >= 0 ? buf + fieldExecID.offset : nullptr;
-     case FieldExecType::KEY : return fieldExecType.offset >= 0 ? buf + fieldExecType.offset : nullptr;
-     case FieldOrdStatus::KEY : return fieldOrdStatus.offset >= 0 ? buf + fieldOrdStatus.offset : nullptr;
-     case FieldOrdRejReason::KEY : return fieldOrdRejReason.offset >= 0 ? buf + fieldOrdRejReason.offset : nullptr;
-     case FieldAccount::KEY : return fieldAccount.offset >= 0 ? buf + fieldAccount.offset : nullptr;
-     case FieldSymbol::KEY : return fieldSymbol.offset >= 0 ? buf + fieldSymbol.offset : nullptr;
-     case FieldSecurityID::KEY : return fieldSecurityID.offset >= 0 ? buf + fieldSecurityID.offset : nullptr;
-     case FieldSecurityType::KEY : return fieldSecurityType.offset >= 0 ? buf + fieldSecurityType.offset : nullptr;
-     case FieldText::KEY : return fieldText.offset >= 0 ? buf + fieldText.offset : nullptr;
-     case FieldProduct::KEY : return fieldProduct.offset >= 0 ? buf + fieldProduct.offset : nullptr;
-     case FieldSide::KEY : return fieldSide.offset >= 0 ? buf + fieldSide.offset : nullptr;
-     case FieldQtyType::KEY : return fieldQtyType.offset >= 0 ? buf + fieldQtyType.offset : nullptr;
-     case FieldOrderQty::KEY : return fieldOrderQty.offset >= 0 ? buf + fieldOrderQty.offset : nullptr;
-     case FieldOrdType::KEY : return fieldOrdType.offset >= 0 ? buf + fieldOrdType.offset : nullptr;
-     case FieldPriceType::KEY : return fieldPriceType.offset >= 0 ? buf + fieldPriceType.offset : nullptr;
-     case FieldPrice::KEY : return fieldPrice.offset >= 0 ? buf + fieldPrice.offset : nullptr;
-     case FieldStopPx::KEY : return fieldStopPx.offset >= 0 ? buf + fieldStopPx.offset : nullptr;
-     case FieldCurrency::KEY : return fieldCurrency.offset >= 0 ? buf + fieldCurrency.offset : nullptr;
-     case FieldTimeInForce::KEY : return fieldTimeInForce.offset >= 0 ? buf + fieldTimeInForce.offset : nullptr;
-     case FieldExecInst::KEY : return fieldExecInst.offset >= 0 ? buf + fieldExecInst.offset : nullptr;
-     case FieldLastQty::KEY : return fieldLastQty.offset >= 0 ? buf + fieldLastQty.offset : nullptr;
-     case FieldLastPx::KEY : return fieldLastPx.offset >= 0 ? buf + fieldLastPx.offset : nullptr;
-     case FieldLeavesQty::KEY : return fieldLeavesQty.offset >= 0 ? buf + fieldLeavesQty.offset : nullptr;
-     case FieldAvgPx::KEY : return fieldAvgPx.offset >= 0 ? buf + fieldAvgPx.offset : nullptr;
-     case FieldCumQty::KEY : return fieldCumQty.offset >= 0 ? buf + fieldCumQty.offset : nullptr;
-     case FieldNoLegs::KEY : return fieldNoLegs.offset >= 0 ? buf + fieldNoLegs.offset : nullptr;
-     case FieldCheckSum::KEY : return fieldCheckSum.offset >= 0 ? buf + fieldCheckSum.offset : nullptr; 
+     case FieldOrderID::TAG : return fieldOrderID.offset > 0 ? _fixPtr + fieldOrderID.offset : nullptr;
+     case FieldClOrdID::TAG : return fieldClOrdID.offset > 0 ? _fixPtr + fieldClOrdID.offset : nullptr;
+     case FieldOrigClOrdID::TAG : return fieldOrigClOrdID.offset > 0 ? _fixPtr + fieldOrigClOrdID.offset : nullptr;
+     case FieldExecID::TAG : return fieldExecID.offset > 0 ? _fixPtr + fieldExecID.offset : nullptr;
+     case FieldExecType::TAG : return fieldExecType.offset > 0 ? _fixPtr + fieldExecType.offset : nullptr;
+     case FieldOrdStatus::TAG : return fieldOrdStatus.offset > 0 ? _fixPtr + fieldOrdStatus.offset : nullptr;
+     case FieldOrdRejReason::TAG : return fieldOrdRejReason.offset > 0 ? _fixPtr + fieldOrdRejReason.offset : nullptr;
+     case FieldAccount::TAG : return fieldAccount.offset > 0 ? _fixPtr + fieldAccount.offset : nullptr;
+     case FieldSymbol::TAG : return fieldSymbol.offset > 0 ? _fixPtr + fieldSymbol.offset : nullptr;
+     case FieldSecurityID::TAG : return fieldSecurityID.offset > 0 ? _fixPtr + fieldSecurityID.offset : nullptr;
+     case FieldSecurityType::TAG : return fieldSecurityType.offset > 0 ? _fixPtr + fieldSecurityType.offset : nullptr;
+     case FieldText::TAG : return fieldText.offset > 0 ? _fixPtr + fieldText.offset : nullptr;
+     case FieldProduct::TAG : return fieldProduct.offset > 0 ? _fixPtr + fieldProduct.offset : nullptr;
+     case FieldSide::TAG : return fieldSide.offset > 0 ? _fixPtr + fieldSide.offset : nullptr;
+     case FieldQtyType::TAG : return fieldQtyType.offset > 0 ? _fixPtr + fieldQtyType.offset : nullptr;
+     case FieldOrderQty::TAG : return fieldOrderQty.offset > 0 ? _fixPtr + fieldOrderQty.offset : nullptr;
+     case FieldOrdType::TAG : return fieldOrdType.offset > 0 ? _fixPtr + fieldOrdType.offset : nullptr;
+     case FieldPriceType::TAG : return fieldPriceType.offset > 0 ? _fixPtr + fieldPriceType.offset : nullptr;
+     case FieldPrice::TAG : return fieldPrice.offset > 0 ? _fixPtr + fieldPrice.offset : nullptr;
+     case FieldStopPx::TAG : return fieldStopPx.offset > 0 ? _fixPtr + fieldStopPx.offset : nullptr;
+     case FieldCurrency::TAG : return fieldCurrency.offset > 0 ? _fixPtr + fieldCurrency.offset : nullptr;
+     case FieldTimeInForce::TAG : return fieldTimeInForce.offset > 0 ? _fixPtr + fieldTimeInForce.offset : nullptr;
+     case FieldExecInst::TAG : return fieldExecInst.offset > 0 ? _fixPtr + fieldExecInst.offset : nullptr;
+     case FieldLastQty::TAG : return fieldLastQty.offset > 0 ? _fixPtr + fieldLastQty.offset : nullptr;
+     case FieldLastPx::TAG : return fieldLastPx.offset > 0 ? _fixPtr + fieldLastPx.offset : nullptr;
+     case FieldLeavesQty::TAG : return fieldLeavesQty.offset > 0 ? _fixPtr + fieldLeavesQty.offset : nullptr;
+     case FieldAvgPx::TAG : return fieldAvgPx.offset > 0 ? _fixPtr + fieldAvgPx.offset : nullptr;
+     case FieldCumQty::TAG : return fieldCumQty.offset > 0 ? _fixPtr + fieldCumQty.offset : nullptr;
+     case FieldNoLegs::TAG : return fieldNoLegs.offset > 0 ? _fixPtr + fieldNoLegs.offset : nullptr;
+     case FieldCheckSum::TAG : return fieldCheckSum.offset > 0 ? _fixPtr + fieldCheckSum.offset : nullptr; 
      default : return nullptr; 
    }
    return nullptr;
 }
 
 
+// ---------------------------------- getKnownFields ---------------------------------
 namespace {
 
 const std::vector<tag_t> Header_knownFields = {
-FieldBeginString::KEY,
-FieldBodyLength::KEY,
-FieldMsgType::KEY,
-FieldSenderCompID::KEY,
-FieldTargetCompID::KEY,
-FieldMsgSeqNum::KEY,
-FieldSendingTime::KEY,
-FieldCheckSum::KEY };
+FieldBeginString::TAG,
+FieldBodyLength::TAG,
+FieldMsgType::TAG,
+FieldSenderCompID::TAG,
+FieldTargetCompID::TAG,
+FieldMsgSeqNum::TAG,
+FieldSendingTime::TAG,
+FieldCheckSum::TAG };
 
 const std::vector<tag_t> NewOrderSingle_knownFields = {
-FieldClOrdID::KEY,
-FieldAccount::KEY,
-FieldSymbol::KEY,
-FieldSecurityID::KEY,
-FieldSide::KEY,
-FieldQtyType::KEY,
-FieldOrderQty::KEY,
-FieldOrdType::KEY,
-FieldPrice::KEY,
-FieldStopPx::KEY,
-FieldTransactTime::KEY,
-FieldCheckSum::KEY };
+FieldClOrdID::TAG,
+FieldAccount::TAG,
+FieldSymbol::TAG,
+FieldSecurityID::TAG,
+FieldSide::TAG,
+FieldQtyType::TAG,
+FieldOrderQty::TAG,
+FieldOrdType::TAG,
+FieldPrice::TAG,
+FieldStopPx::TAG,
+FieldTransactTime::TAG,
+FieldCheckSum::TAG };
 
 const std::vector<tag_t> ExecutionReport_knownFields = {
-FieldOrderID::KEY,
-FieldClOrdID::KEY,
-FieldOrigClOrdID::KEY,
-FieldExecID::KEY,
-FieldExecType::KEY,
-FieldOrdStatus::KEY,
-FieldOrdRejReason::KEY,
-FieldAccount::KEY,
-FieldSymbol::KEY,
-FieldSecurityID::KEY,
-FieldSecurityType::KEY,
-FieldText::KEY,
-FieldProduct::KEY,
-FieldSide::KEY,
-FieldQtyType::KEY,
-FieldOrderQty::KEY,
-FieldOrdType::KEY,
-FieldPriceType::KEY,
-FieldPrice::KEY,
-FieldStopPx::KEY,
-FieldCurrency::KEY,
-FieldTimeInForce::KEY,
-FieldExecInst::KEY,
-FieldLastQty::KEY,
-FieldLastPx::KEY,
-FieldLeavesQty::KEY,
-FieldAvgPx::KEY,
-FieldCumQty::KEY,
-FieldNoLegs::KEY,
-FieldCheckSum::KEY };
+FieldOrderID::TAG,
+FieldClOrdID::TAG,
+FieldOrigClOrdID::TAG,
+FieldExecID::TAG,
+FieldExecType::TAG,
+FieldOrdStatus::TAG,
+FieldOrdRejReason::TAG,
+FieldAccount::TAG,
+FieldSymbol::TAG,
+FieldSecurityID::TAG,
+FieldSecurityType::TAG,
+FieldText::TAG,
+FieldProduct::TAG,
+FieldSide::TAG,
+FieldQtyType::TAG,
+FieldOrderQty::TAG,
+FieldOrdType::TAG,
+FieldPriceType::TAG,
+FieldPrice::TAG,
+FieldStopPx::TAG,
+FieldCurrency::TAG,
+FieldTimeInForce::TAG,
+FieldExecInst::TAG,
+FieldLastQty::TAG,
+FieldLastPx::TAG,
+FieldLeavesQty::TAG,
+FieldAvgPx::TAG,
+FieldCumQty::TAG,
+FieldNoLegs::TAG,
+FieldCheckSum::TAG };
 
 }
 
@@ -830,71 +310,6 @@ GetDepthMethod getTagDepthMethodByRawMsgType( raw_enum_t rawMsgType ){
 }
 
 
-// -------------------------------------- reset ----------------------------------------
-
-void MessageHeader::reset(){
-     buf = nullptr;
-     fieldBeginString.offset = -1;
-     fieldBodyLength.offset = -1;
-     fieldMsgType.offset = -1;
-     fieldSenderCompID.offset = -1;
-     fieldTargetCompID.offset = -1;
-     fieldMsgSeqNum.offset = -1;
-     fieldSendingTime.offset = -1;
-     fieldCheckSum.offset = -1;
-}
-
-void MessageNewOrderSingle::reset(){
-     buf = nullptr;
-     fieldClOrdID.offset = -1;
-     fieldAccount.offset = -1;
-     fieldSymbol.offset = -1;
-     fieldSecurityID.offset = -1;
-     fieldSide.offset = -1;
-     fieldQtyType.offset = -1;
-     fieldOrderQty.offset = -1;
-     fieldOrdType.offset = -1;
-     fieldPrice.offset = -1;
-     fieldStopPx.offset = -1;
-     fieldTransactTime.offset = -1;
-     fieldCheckSum.offset = -1;
-}
-
-void MessageExecutionReport::reset(){
-     buf = nullptr;
-     fieldOrderID.offset = -1;
-     fieldClOrdID.offset = -1;
-     fieldOrigClOrdID.offset = -1;
-     fieldExecID.offset = -1;
-     fieldExecType.offset = -1;
-     fieldOrdStatus.offset = -1;
-     fieldOrdRejReason.offset = -1;
-     fieldAccount.offset = -1;
-     fieldSymbol.offset = -1;
-     fieldSecurityID.offset = -1;
-     fieldSecurityType.offset = -1;
-     fieldText.offset = -1;
-     fieldProduct.offset = -1;
-     fieldSide.offset = -1;
-     fieldQtyType.offset = -1;
-     fieldOrderQty.offset = -1;
-     fieldOrdType.offset = -1;
-     fieldPriceType.offset = -1;
-     fieldPrice.offset = -1;
-     fieldStopPx.offset = -1;
-     fieldCurrency.offset = -1;
-     fieldTimeInForce.offset = -1;
-     fieldExecInst.offset = -1;
-     fieldLastQty.offset = -1;
-     fieldLastPx.offset = -1;
-     fieldLeavesQty.offset = -1;
-     fieldAvgPx.offset = -1;
-     fieldCumQty.offset = -1;
-     for( auto g = groupsLegs.begin(); g != groupsLegs.end() and g->getMessageBuffer(); ++g ) g->reset();
-     fieldCheckSum.offset = -1;
-}
-
-
 // -------------------------------------- ParserDispatcher ----------------------------------------
 
 
@@ -908,7 +323,7 @@ const char * ParserDispatcher::parseAndDipatch( const char * buf, unsigned len, 
 
     unsigned bodyLength = _msgHeader.getBodyLength();
     const char * endOfMessage = _msgHeader.ptrToMsgType() + bodyLength + 4; // 7 for checkSum - 3 for msg type tag
-    if( endOfMessage - buf > len )
+    if( endOfMessage - buf > (std::ptrdiff_t)len )
     {
         return nullptr;
     }
@@ -925,6 +340,7 @@ const char * ParserDispatcher::parseAndDipatch( const char * buf, unsigned len, 
 
 
 // case-begin-_
+// After generation one can sed this out if _ is not incoming message
       case MsgTypeRaw__ : {
        if( resetMessage ) _msgHeader.reset();
        pos = _msgHeader.scan( buf, len - pos );
@@ -935,6 +351,7 @@ const char * ParserDispatcher::parseAndDipatch( const char * buf, unsigned len, 
 
 
 // case-begin-NEW_ORDER_SINGLE
+// After generation one can sed this out if NEW_ORDER_SINGLE is not incoming message
       case MsgTypeRaw_NEW_ORDER_SINGLE : {
        if( resetMessage ) _msgNewOrderSingle.reset();
        pos = _msgNewOrderSingle.scan( buf, len - pos );
@@ -945,6 +362,7 @@ const char * ParserDispatcher::parseAndDipatch( const char * buf, unsigned len, 
 
 
 // case-begin-EXECUTION_REPORT
+// After generation one can sed this out if EXECUTION_REPORT is not incoming message
       case MsgTypeRaw_EXECUTION_REPORT : {
        if( resetMessage ) _msgExecutionReport.reset();
        pos = _msgExecutionReport.scan( buf, len - pos );
@@ -1006,17 +424,17 @@ void ParserDispatcher::unprocessedMessage( raw_enum_t msgType, MessageBase & msg
 {
 }
 
-std::set< raw_tag_t > headerFields =
+std::set< raw_tag_t > headerRawTags =
 {
-// start of Header.cxx
- FieldBeginString::RAW,
- FieldBodyLength::RAW,
- FieldMsgType::RAW,
- FieldSenderCompID::RAW,
- FieldTargetCompID::RAW,
- FieldMsgSeqNum::RAW,
- FieldSendingTime::RAW,
-// end of Header.cxx
+// start of HeaderRaw.cxx
+ FieldBeginString::RAW_TAG,
+ FieldBodyLength::RAW_TAG,
+ FieldMsgType::RAW_TAG,
+ FieldSenderCompID::RAW_TAG,
+ FieldTargetCompID::RAW_TAG,
+ FieldMsgSeqNum::RAW_TAG,
+ FieldSendingTime::RAW_TAG,
+// end of HeaderRaw.cxx
 };
 
 const FixFormatStyle defaultStyle =
@@ -1189,14 +607,14 @@ const char * getEnumName( const char * fix, int valueOffset )
         --pos;
     }
 
-    const raw_tag_t tag = nextRawTag( fix+pos, pos );
+    const raw_tag_t tag = loadRawTag( fix+pos, pos );
     if( tag == 0 )
     {
         return nullptr;
     }
 
-    auto eit = rawToEnum.find( tag );
-    if( eit == rawToEnum.end() )
+    auto eit = RAW_TO_ENUM.find( tag );
+    if( eit == RAW_TO_ENUM.end() )
     {
         return nullptr;
     }
@@ -1213,7 +631,7 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
     while( fix[pos] )
     {
         offset_t prev = pos;
-        const raw_tag_t tag = nextRawTag( fix+pos, pos );
+        const raw_tag_t tag = loadRawTag( fix+pos, pos );
 
         if( tag == 0 )
         {
@@ -1223,11 +641,11 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
 
         os << style.fieldBegin;
 
-        auto it = rawToTagName.find( tag );
+        auto it = RAW_TAG_TO_NAME.find( tag );
         const FieldEnumsBase * enums = nullptr;
-        if( it != rawToTagName.end() )
+        if( it != RAW_TAG_TO_NAME.end() )
         {
-            if( headerFields.find( tag ) != headerFields.end() )
+            if( headerRawTags.find( tag ) != headerRawTags.end() )
             {
                 if( style.headerTagNameStart )
                 {
@@ -1255,8 +673,8 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
                 }
             }
 
-            auto eit = rawToEnum.find( tag );
-            if( eit != rawToEnum.end() )
+            auto eit = RAW_TO_ENUM.find( tag );
+            if( eit != RAW_TO_ENUM.end() )
             {
                 enums = eit->second;
             }
@@ -1297,7 +715,7 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
                 os << style.unknownStart << " UNKNOWN" << style.unknownStop;
             }
 
-            if( tag == FieldMsgType::RAW and indentator == autoIndentFields )
+            if( tag == FieldMsgType::RAW_TAG and indentator == autoIndentFields )
             {
                 indentator = getTagDepthMethodByRawMsgType( rawEnum );
             }
@@ -1308,7 +726,7 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
         os.flush();
 
         ++pos;
-        if( tag == FieldCheckSum::RAW )
+        if( tag == FieldCheckSum::RAW_TAG )
         {
             break;
         }

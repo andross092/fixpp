@@ -27,22 +27,32 @@ class GroupLegStipulations : public MessageBase
    void reset();
    static const char * getMessageName();
    static offset_t scan( Array & arr, const char * fix, unsigned len );
+   static offset_t scanSafely( Array & arr, const char * fix, unsigned len, unsigned & groupCount, const char * & badFieldPtr );
    static offset_t skip( const char * fix, unsigned len );
    const char * getFieldValue( unsigned tag ) const;
+   const char * findBadField() const;
+   const char * findBadGroup( unsigned & noExpected, unsigned & noReceived ) const;
+   const char * findBadEnum() const;
    static FieldDepth getFieldDepth( raw_tag_t tag );
    static const std::vector<unsigned> & getKnownFields();
    private: static GetDepthMethod groupGetDepthMethods[];
    
    public:
-   bool isSetLegStipulationType() const { return fieldLegStipulationType.offset >= 0; }
-   FieldLegStipulationType::ValueType getLegStipulationType() const { return fieldLegStipulationType.getValue( buf ); }
-   const char * ptrToLegStipulationType() const { return buf + fieldLegStipulationType.offset; }
+   bool isSetLegStipulationType() const { return fieldLegStipulationType.offset > 0; }
+   FieldLegStipulationType::ValueType getLegStipulationType() const { return fieldLegStipulationType.getValue( _fixPtr ); }
+   std::string_view getLegStipulationTypeView() const { return fieldLegStipulationType.offset > 0 ? std::string_view{ _fixPtr + fieldLegStipulationType.offset, getValueLength( _fixPtr + fieldLegStipulationType.offset ) } : std::string_view{}; }
+   const char * ptrToLegStipulationType() const { return _fixPtr + fieldLegStipulationType.offset; }
+   const char * ptrToTagLegStipulationType() const { return _fixPtr + fieldLegStipulationType.offset - 1 - FieldLegStipulationType::tagWidth(); }
+   const char * getIfSetLegStipulationType() const { return fieldLegStipulationType.offset > 0 ? _fixPtr + fieldLegStipulationType.offset : nullptr; }
    private: FieldLegStipulationType fieldLegStipulationType;
 
    public:
-   bool isSetLegStipulationValue() const { return fieldLegStipulationValue.offset >= 0; }
-   FieldLegStipulationValue::ValueType getLegStipulationValue() const { return fieldLegStipulationValue.getValue( buf ); }
-   const char * ptrToLegStipulationValue() const { return buf + fieldLegStipulationValue.offset; }
+   bool isSetLegStipulationValue() const { return fieldLegStipulationValue.offset > 0; }
+   FieldLegStipulationValue::ValueType getLegStipulationValue() const { return fieldLegStipulationValue.getValue( _fixPtr ); }
+   std::string_view getLegStipulationValueView() const { return fieldLegStipulationValue.offset > 0 ? std::string_view{ _fixPtr + fieldLegStipulationValue.offset, getValueLength( _fixPtr + fieldLegStipulationValue.offset ) } : std::string_view{}; }
+   const char * ptrToLegStipulationValue() const { return _fixPtr + fieldLegStipulationValue.offset; }
+   const char * ptrToTagLegStipulationValue() const { return _fixPtr + fieldLegStipulationValue.offset - 1 - FieldLegStipulationValue::tagWidth(); }
+   const char * getIfSetLegStipulationValue() const { return fieldLegStipulationValue.offset > 0 ? _fixPtr + fieldLegStipulationValue.offset : nullptr; }
    private: FieldLegStipulationValue fieldLegStipulationValue;
 
 };
@@ -57,22 +67,32 @@ class GroupNestedPartySubIDs : public MessageBase
    void reset();
    static const char * getMessageName();
    static offset_t scan( Array & arr, const char * fix, unsigned len );
+   static offset_t scanSafely( Array & arr, const char * fix, unsigned len, unsigned & groupCount, const char * & badFieldPtr );
    static offset_t skip( const char * fix, unsigned len );
    const char * getFieldValue( unsigned tag ) const;
+   const char * findBadField() const;
+   const char * findBadGroup( unsigned & noExpected, unsigned & noReceived ) const;
+   const char * findBadEnum() const;
    static FieldDepth getFieldDepth( raw_tag_t tag );
    static const std::vector<unsigned> & getKnownFields();
    private: static GetDepthMethod groupGetDepthMethods[];
    
    public:
-   bool isSetNestedPartySubID() const { return fieldNestedPartySubID.offset >= 0; }
-   FieldNestedPartySubID::ValueType getNestedPartySubID() const { return fieldNestedPartySubID.getValue( buf ); }
-   const char * ptrToNestedPartySubID() const { return buf + fieldNestedPartySubID.offset; }
+   bool isSetNestedPartySubID() const { return fieldNestedPartySubID.offset > 0; }
+   FieldNestedPartySubID::ValueType getNestedPartySubID() const { return fieldNestedPartySubID.getValue( _fixPtr ); }
+   std::string_view getNestedPartySubIDView() const { return fieldNestedPartySubID.offset > 0 ? std::string_view{ _fixPtr + fieldNestedPartySubID.offset, getValueLength( _fixPtr + fieldNestedPartySubID.offset ) } : std::string_view{}; }
+   const char * ptrToNestedPartySubID() const { return _fixPtr + fieldNestedPartySubID.offset; }
+   const char * ptrToTagNestedPartySubID() const { return _fixPtr + fieldNestedPartySubID.offset - 1 - FieldNestedPartySubID::tagWidth(); }
+   const char * getIfSetNestedPartySubID() const { return fieldNestedPartySubID.offset > 0 ? _fixPtr + fieldNestedPartySubID.offset : nullptr; }
    private: FieldNestedPartySubID fieldNestedPartySubID;
 
    public:
-   bool isSetNestedPartySubIDType() const { return fieldNestedPartySubIDType.offset >= 0; }
-   FieldNestedPartySubIDType::ValueType getNestedPartySubIDType() const { return fieldNestedPartySubIDType.getValue( buf ); }
-   const char * ptrToNestedPartySubIDType() const { return buf + fieldNestedPartySubIDType.offset; }
+   bool isSetNestedPartySubIDType() const { return fieldNestedPartySubIDType.offset > 0; }
+   FieldNestedPartySubIDType::ValueType getNestedPartySubIDType() const { return fieldNestedPartySubIDType.getValue( _fixPtr ); }
+   std::string_view getNestedPartySubIDTypeView() const { return fieldNestedPartySubIDType.offset > 0 ? std::string_view{ _fixPtr + fieldNestedPartySubIDType.offset, getValueLength( _fixPtr + fieldNestedPartySubIDType.offset ) } : std::string_view{}; }
+   const char * ptrToNestedPartySubIDType() const { return _fixPtr + fieldNestedPartySubIDType.offset; }
+   const char * ptrToTagNestedPartySubIDType() const { return _fixPtr + fieldNestedPartySubIDType.offset - 1 - FieldNestedPartySubIDType::tagWidth(); }
+   const char * getIfSetNestedPartySubIDType() const { return fieldNestedPartySubIDType.offset > 0 ? _fixPtr + fieldNestedPartySubIDType.offset : nullptr; }
    private: FieldNestedPartySubIDType fieldNestedPartySubIDType;
 
 };
@@ -87,34 +107,50 @@ class GroupNestedPartyIDs : public MessageBase
    void reset();
    static const char * getMessageName();
    static offset_t scan( Array & arr, const char * fix, unsigned len );
+   static offset_t scanSafely( Array & arr, const char * fix, unsigned len, unsigned & groupCount, const char * & badFieldPtr );
    static offset_t skip( const char * fix, unsigned len );
    const char * getFieldValue( unsigned tag ) const;
+   const char * findBadField() const;
+   const char * findBadGroup( unsigned & noExpected, unsigned & noReceived ) const;
+   const char * findBadEnum() const;
    static FieldDepth getFieldDepth( raw_tag_t tag );
    static const std::vector<unsigned> & getKnownFields();
    private: static GetDepthMethod groupGetDepthMethods[];
    
    public:
-   bool isSetNestedPartyID() const { return fieldNestedPartyID.offset >= 0; }
-   FieldNestedPartyID::ValueType getNestedPartyID() const { return fieldNestedPartyID.getValue( buf ); }
-   const char * ptrToNestedPartyID() const { return buf + fieldNestedPartyID.offset; }
+   bool isSetNestedPartyID() const { return fieldNestedPartyID.offset > 0; }
+   FieldNestedPartyID::ValueType getNestedPartyID() const { return fieldNestedPartyID.getValue( _fixPtr ); }
+   std::string_view getNestedPartyIDView() const { return fieldNestedPartyID.offset > 0 ? std::string_view{ _fixPtr + fieldNestedPartyID.offset, getValueLength( _fixPtr + fieldNestedPartyID.offset ) } : std::string_view{}; }
+   const char * ptrToNestedPartyID() const { return _fixPtr + fieldNestedPartyID.offset; }
+   const char * ptrToTagNestedPartyID() const { return _fixPtr + fieldNestedPartyID.offset - 1 - FieldNestedPartyID::tagWidth(); }
+   const char * getIfSetNestedPartyID() const { return fieldNestedPartyID.offset > 0 ? _fixPtr + fieldNestedPartyID.offset : nullptr; }
    private: FieldNestedPartyID fieldNestedPartyID;
 
    public:
-   bool isSetNestedPartyIDSource() const { return fieldNestedPartyIDSource.offset >= 0; }
-   FieldNestedPartyIDSource::ValueType getNestedPartyIDSource() const { return fieldNestedPartyIDSource.getValue( buf ); }
-   const char * ptrToNestedPartyIDSource() const { return buf + fieldNestedPartyIDSource.offset; }
+   bool isSetNestedPartyIDSource() const { return fieldNestedPartyIDSource.offset > 0; }
+   FieldNestedPartyIDSource::ValueType getNestedPartyIDSource() const { return fieldNestedPartyIDSource.getValue( _fixPtr ); }
+   std::string_view getNestedPartyIDSourceView() const { return fieldNestedPartyIDSource.offset > 0 ? std::string_view{ _fixPtr + fieldNestedPartyIDSource.offset, getValueLength( _fixPtr + fieldNestedPartyIDSource.offset ) } : std::string_view{}; }
+   const char * ptrToNestedPartyIDSource() const { return _fixPtr + fieldNestedPartyIDSource.offset; }
+   const char * ptrToTagNestedPartyIDSource() const { return _fixPtr + fieldNestedPartyIDSource.offset - 1 - FieldNestedPartyIDSource::tagWidth(); }
+   const char * getIfSetNestedPartyIDSource() const { return fieldNestedPartyIDSource.offset > 0 ? _fixPtr + fieldNestedPartyIDSource.offset : nullptr; }
    private: FieldNestedPartyIDSource fieldNestedPartyIDSource;
 
    public:
-   bool isSetNestedPartyRole() const { return fieldNestedPartyRole.offset >= 0; }
-   FieldNestedPartyRole::ValueType getNestedPartyRole() const { return fieldNestedPartyRole.getValue( buf ); }
-   const char * ptrToNestedPartyRole() const { return buf + fieldNestedPartyRole.offset; }
+   bool isSetNestedPartyRole() const { return fieldNestedPartyRole.offset > 0; }
+   FieldNestedPartyRole::ValueType getNestedPartyRole() const { return fieldNestedPartyRole.getValue( _fixPtr ); }
+   std::string_view getNestedPartyRoleView() const { return fieldNestedPartyRole.offset > 0 ? std::string_view{ _fixPtr + fieldNestedPartyRole.offset, getValueLength( _fixPtr + fieldNestedPartyRole.offset ) } : std::string_view{}; }
+   const char * ptrToNestedPartyRole() const { return _fixPtr + fieldNestedPartyRole.offset; }
+   const char * ptrToTagNestedPartyRole() const { return _fixPtr + fieldNestedPartyRole.offset - 1 - FieldNestedPartyRole::tagWidth(); }
+   const char * getIfSetNestedPartyRole() const { return fieldNestedPartyRole.offset > 0 ? _fixPtr + fieldNestedPartyRole.offset : nullptr; }
    private: FieldNestedPartyRole fieldNestedPartyRole;
 
    public:
-   bool isSetNoNestedPartySubIDs() const { return fieldNoNestedPartySubIDs.offset >= 0; }
-   FieldNoNestedPartySubIDs::ValueType getNoNestedPartySubIDs() const { return fieldNoNestedPartySubIDs.getValue( buf ); }
-   const char * ptrToNoNestedPartySubIDs() const { return buf + fieldNoNestedPartySubIDs.offset; }
+   bool isSetNoNestedPartySubIDs() const { return fieldNoNestedPartySubIDs.offset > 0; }
+   FieldNoNestedPartySubIDs::ValueType getNoNestedPartySubIDs() const { return fieldNoNestedPartySubIDs.getValue( _fixPtr ); }
+   std::string_view getNoNestedPartySubIDsView() const { return fieldNoNestedPartySubIDs.offset > 0 ? std::string_view{ _fixPtr + fieldNoNestedPartySubIDs.offset, getValueLength( _fixPtr + fieldNoNestedPartySubIDs.offset ) } : std::string_view{}; }
+   const char * ptrToNoNestedPartySubIDs() const { return _fixPtr + fieldNoNestedPartySubIDs.offset; }
+   const char * ptrToTagNoNestedPartySubIDs() const { return _fixPtr + fieldNoNestedPartySubIDs.offset - 1 - FieldNoNestedPartySubIDs::tagWidth(); }
+   const char * getIfSetNoNestedPartySubIDs() const { return fieldNoNestedPartySubIDs.offset > 0 ? _fixPtr + fieldNoNestedPartySubIDs.offset : nullptr; }
    private: FieldNoNestedPartySubIDs fieldNoNestedPartySubIDs;
   
    public:
@@ -134,34 +170,50 @@ class GroupLegs : public MessageBase
    void reset();
    static const char * getMessageName();
    static offset_t scan( Array & arr, const char * fix, unsigned len );
+   static offset_t scanSafely( Array & arr, const char * fix, unsigned len, unsigned & groupCount, const char * & badFieldPtr );
    static offset_t skip( const char * fix, unsigned len );
    const char * getFieldValue( unsigned tag ) const;
+   const char * findBadField() const;
+   const char * findBadGroup( unsigned & noExpected, unsigned & noReceived ) const;
+   const char * findBadEnum() const;
    static FieldDepth getFieldDepth( raw_tag_t tag );
    static const std::vector<unsigned> & getKnownFields();
    private: static GetDepthMethod groupGetDepthMethods[];
    
    public:
-   bool isSetLegSymbol() const { return fieldLegSymbol.offset >= 0; }
-   FieldLegSymbol::ValueType getLegSymbol() const { return fieldLegSymbol.getValue( buf ); }
-   const char * ptrToLegSymbol() const { return buf + fieldLegSymbol.offset; }
+   bool isSetLegSymbol() const { return fieldLegSymbol.offset > 0; }
+   FieldLegSymbol::ValueType getLegSymbol() const { return fieldLegSymbol.getValue( _fixPtr ); }
+   std::string_view getLegSymbolView() const { return fieldLegSymbol.offset > 0 ? std::string_view{ _fixPtr + fieldLegSymbol.offset, getValueLength( _fixPtr + fieldLegSymbol.offset ) } : std::string_view{}; }
+   const char * ptrToLegSymbol() const { return _fixPtr + fieldLegSymbol.offset; }
+   const char * ptrToTagLegSymbol() const { return _fixPtr + fieldLegSymbol.offset - 1 - FieldLegSymbol::tagWidth(); }
+   const char * getIfSetLegSymbol() const { return fieldLegSymbol.offset > 0 ? _fixPtr + fieldLegSymbol.offset : nullptr; }
    private: FieldLegSymbol fieldLegSymbol;
 
    public:
-   bool isSetLegSide() const { return fieldLegSide.offset >= 0; }
-   FieldLegSide::ValueType getLegSide() const { return fieldLegSide.getValue( buf ); }
-   const char * ptrToLegSide() const { return buf + fieldLegSide.offset; }
+   bool isSetLegSide() const { return fieldLegSide.offset > 0; }
+   FieldLegSide::ValueType getLegSide() const { return fieldLegSide.getValue( _fixPtr ); }
+   std::string_view getLegSideView() const { return fieldLegSide.offset > 0 ? std::string_view{ _fixPtr + fieldLegSide.offset, getValueLength( _fixPtr + fieldLegSide.offset ) } : std::string_view{}; }
+   const char * ptrToLegSide() const { return _fixPtr + fieldLegSide.offset; }
+   const char * ptrToTagLegSide() const { return _fixPtr + fieldLegSide.offset - 1 - FieldLegSide::tagWidth(); }
+   const char * getIfSetLegSide() const { return fieldLegSide.offset > 0 ? _fixPtr + fieldLegSide.offset : nullptr; }
    private: FieldLegSide fieldLegSide;
 
    public:
-   bool isSetLegQty() const { return fieldLegQty.offset >= 0; }
-   FieldLegQty::ValueType getLegQty() const { return fieldLegQty.getValue( buf ); }
-   const char * ptrToLegQty() const { return buf + fieldLegQty.offset; }
+   bool isSetLegQty() const { return fieldLegQty.offset > 0; }
+   FieldLegQty::ValueType getLegQty() const { return fieldLegQty.getValue( _fixPtr ); }
+   std::string_view getLegQtyView() const { return fieldLegQty.offset > 0 ? std::string_view{ _fixPtr + fieldLegQty.offset, getValueLength( _fixPtr + fieldLegQty.offset ) } : std::string_view{}; }
+   const char * ptrToLegQty() const { return _fixPtr + fieldLegQty.offset; }
+   const char * ptrToTagLegQty() const { return _fixPtr + fieldLegQty.offset - 1 - FieldLegQty::tagWidth(); }
+   const char * getIfSetLegQty() const { return fieldLegQty.offset > 0 ? _fixPtr + fieldLegQty.offset : nullptr; }
    private: FieldLegQty fieldLegQty;
 
    public:
-   bool isSetNoLegStipulations() const { return fieldNoLegStipulations.offset >= 0; }
-   FieldNoLegStipulations::ValueType getNoLegStipulations() const { return fieldNoLegStipulations.getValue( buf ); }
-   const char * ptrToNoLegStipulations() const { return buf + fieldNoLegStipulations.offset; }
+   bool isSetNoLegStipulations() const { return fieldNoLegStipulations.offset > 0; }
+   FieldNoLegStipulations::ValueType getNoLegStipulations() const { return fieldNoLegStipulations.getValue( _fixPtr ); }
+   std::string_view getNoLegStipulationsView() const { return fieldNoLegStipulations.offset > 0 ? std::string_view{ _fixPtr + fieldNoLegStipulations.offset, getValueLength( _fixPtr + fieldNoLegStipulations.offset ) } : std::string_view{}; }
+   const char * ptrToNoLegStipulations() const { return _fixPtr + fieldNoLegStipulations.offset; }
+   const char * ptrToTagNoLegStipulations() const { return _fixPtr + fieldNoLegStipulations.offset - 1 - FieldNoLegStipulations::tagWidth(); }
+   const char * getIfSetNoLegStipulations() const { return fieldNoLegStipulations.offset > 0 ? _fixPtr + fieldNoLegStipulations.offset : nullptr; }
    private: FieldNoLegStipulations fieldNoLegStipulations;
   
    public:
@@ -170,15 +222,21 @@ class GroupLegs : public MessageBase
    private: GroupLegStipulations::Array groupsLegStipulations{ 10 };
 
    public:
-   bool isSetLegPositionEffect() const { return fieldLegPositionEffect.offset >= 0; }
-   FieldLegPositionEffect::ValueType getLegPositionEffect() const { return fieldLegPositionEffect.getValue( buf ); }
-   const char * ptrToLegPositionEffect() const { return buf + fieldLegPositionEffect.offset; }
+   bool isSetLegPositionEffect() const { return fieldLegPositionEffect.offset > 0; }
+   FieldLegPositionEffect::ValueType getLegPositionEffect() const { return fieldLegPositionEffect.getValue( _fixPtr ); }
+   std::string_view getLegPositionEffectView() const { return fieldLegPositionEffect.offset > 0 ? std::string_view{ _fixPtr + fieldLegPositionEffect.offset, getValueLength( _fixPtr + fieldLegPositionEffect.offset ) } : std::string_view{}; }
+   const char * ptrToLegPositionEffect() const { return _fixPtr + fieldLegPositionEffect.offset; }
+   const char * ptrToTagLegPositionEffect() const { return _fixPtr + fieldLegPositionEffect.offset - 1 - FieldLegPositionEffect::tagWidth(); }
+   const char * getIfSetLegPositionEffect() const { return fieldLegPositionEffect.offset > 0 ? _fixPtr + fieldLegPositionEffect.offset : nullptr; }
    private: FieldLegPositionEffect fieldLegPositionEffect;
 
    public:
-   bool isSetNoNestedPartyIDs() const { return fieldNoNestedPartyIDs.offset >= 0; }
-   FieldNoNestedPartyIDs::ValueType getNoNestedPartyIDs() const { return fieldNoNestedPartyIDs.getValue( buf ); }
-   const char * ptrToNoNestedPartyIDs() const { return buf + fieldNoNestedPartyIDs.offset; }
+   bool isSetNoNestedPartyIDs() const { return fieldNoNestedPartyIDs.offset > 0; }
+   FieldNoNestedPartyIDs::ValueType getNoNestedPartyIDs() const { return fieldNoNestedPartyIDs.getValue( _fixPtr ); }
+   std::string_view getNoNestedPartyIDsView() const { return fieldNoNestedPartyIDs.offset > 0 ? std::string_view{ _fixPtr + fieldNoNestedPartyIDs.offset, getValueLength( _fixPtr + fieldNoNestedPartyIDs.offset ) } : std::string_view{}; }
+   const char * ptrToNoNestedPartyIDs() const { return _fixPtr + fieldNoNestedPartyIDs.offset; }
+   const char * ptrToTagNoNestedPartyIDs() const { return _fixPtr + fieldNoNestedPartyIDs.offset - 1 - FieldNoNestedPartyIDs::tagWidth(); }
+   const char * getIfSetNoNestedPartyIDs() const { return fieldNoNestedPartyIDs.offset > 0 ? _fixPtr + fieldNoNestedPartyIDs.offset : nullptr; }
    private: FieldNoNestedPartyIDs fieldNoNestedPartyIDs;
   
    public:
@@ -187,21 +245,30 @@ class GroupLegs : public MessageBase
    private: GroupNestedPartyIDs::Array groupsNestedPartyIDs{ 10 };
 
    public:
-   bool isSetLegRefID() const { return fieldLegRefID.offset >= 0; }
-   FieldLegRefID::ValueType getLegRefID() const { return fieldLegRefID.getValue( buf ); }
-   const char * ptrToLegRefID() const { return buf + fieldLegRefID.offset; }
+   bool isSetLegRefID() const { return fieldLegRefID.offset > 0; }
+   FieldLegRefID::ValueType getLegRefID() const { return fieldLegRefID.getValue( _fixPtr ); }
+   std::string_view getLegRefIDView() const { return fieldLegRefID.offset > 0 ? std::string_view{ _fixPtr + fieldLegRefID.offset, getValueLength( _fixPtr + fieldLegRefID.offset ) } : std::string_view{}; }
+   const char * ptrToLegRefID() const { return _fixPtr + fieldLegRefID.offset; }
+   const char * ptrToTagLegRefID() const { return _fixPtr + fieldLegRefID.offset - 1 - FieldLegRefID::tagWidth(); }
+   const char * getIfSetLegRefID() const { return fieldLegRefID.offset > 0 ? _fixPtr + fieldLegRefID.offset : nullptr; }
    private: FieldLegRefID fieldLegRefID;
 
    public:
-   bool isSetLegPrice() const { return fieldLegPrice.offset >= 0; }
-   FieldLegPrice::ValueType getLegPrice() const { return fieldLegPrice.getValue( buf ); }
-   const char * ptrToLegPrice() const { return buf + fieldLegPrice.offset; }
+   bool isSetLegPrice() const { return fieldLegPrice.offset > 0; }
+   FieldLegPrice::ValueType getLegPrice() const { return fieldLegPrice.getValue( _fixPtr ); }
+   std::string_view getLegPriceView() const { return fieldLegPrice.offset > 0 ? std::string_view{ _fixPtr + fieldLegPrice.offset, getValueLength( _fixPtr + fieldLegPrice.offset ) } : std::string_view{}; }
+   const char * ptrToLegPrice() const { return _fixPtr + fieldLegPrice.offset; }
+   const char * ptrToTagLegPrice() const { return _fixPtr + fieldLegPrice.offset - 1 - FieldLegPrice::tagWidth(); }
+   const char * getIfSetLegPrice() const { return fieldLegPrice.offset > 0 ? _fixPtr + fieldLegPrice.offset : nullptr; }
    private: FieldLegPrice fieldLegPrice;
 
    public:
-   bool isSetLegLastPx() const { return fieldLegLastPx.offset >= 0; }
-   FieldLegLastPx::ValueType getLegLastPx() const { return fieldLegLastPx.getValue( buf ); }
-   const char * ptrToLegLastPx() const { return buf + fieldLegLastPx.offset; }
+   bool isSetLegLastPx() const { return fieldLegLastPx.offset > 0; }
+   FieldLegLastPx::ValueType getLegLastPx() const { return fieldLegLastPx.getValue( _fixPtr ); }
+   std::string_view getLegLastPxView() const { return fieldLegLastPx.offset > 0 ? std::string_view{ _fixPtr + fieldLegLastPx.offset, getValueLength( _fixPtr + fieldLegLastPx.offset ) } : std::string_view{}; }
+   const char * ptrToLegLastPx() const { return _fixPtr + fieldLegLastPx.offset; }
+   const char * ptrToTagLegLastPx() const { return _fixPtr + fieldLegLastPx.offset - 1 - FieldLegLastPx::tagWidth(); }
+   const char * getIfSetLegLastPx() const { return fieldLegLastPx.offset > 0 ? _fixPtr + fieldLegLastPx.offset : nullptr; }
    private: FieldLegLastPx fieldLegLastPx;
 
 };

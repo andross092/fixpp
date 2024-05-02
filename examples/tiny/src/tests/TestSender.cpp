@@ -1,5 +1,5 @@
 #include <tiny/SenderApi.h>
-#include "Helper.h"
+#include <utests/TrivialHelper.h>
 
 using namespace tiny;
 using namespace tiny::field;
@@ -15,37 +15,53 @@ int main( int args, const char ** argv )
     execReport.header.finalize();
 
     // will use userTime1 as TransactTime
-    execReport.userTime1.secFraction = TimestampKeeper::Precision::MILLISECONDS;
+    execReport.userTime1.secFraction = ClockPrecision::MILLISECONDS;
 
     execReport.append<SendingTime>( TimestampKeeper::PLACE_HOLDER, TimestampKeeper::DATE_TIME_NANOS_LENGTH );
-    execReport.sendingTime.setup( execReport.end - TimestampKeeper::DATE_TIME_NANOS_LENGTH, TimestampKeeper::Precision::NANOSECONDS );
+    execReport.sendingTime.setup( execReport.end - TimestampKeeper::DATE_TIME_NANOS_LENGTH, ClockPrecision::NANOSECONDS );
     execReport.sendingTime.update();
     const unsigned sendingTimeLength = execReport.end - execReport.begin;
 
     execReport.append<ClOrdID>("OID123");
     execReport.append<TransactTime>( execReport.userTime1 );
-    execReport.append<QtyType>( QtyTypeEnums::CONTRACTS.value );
-    execReport.append<Price>( 123.04567, 4 );
+    execReport.append<QtyType>( QtyTypeEnums::CONTRACTS );
+    execReport.append<Price>( "123.04567"_ff );
     execReport.setSeqnumAndUpdateHeaderAndChecksum(123);
-    std::cout << computeChecksum( execReport.start, execReport.end - 7 ) << "\n";
     std::cout << fixstr( execReport.start, ttyRgbStyle ) << std::endl;
 
-    auto len = execReport.end - execReport.start;
-    std::cout.write( execReport.start, len ) << std::endl;
+    int chksum;
+    size_t len;
+    offset_t pos;
     Header header;
-    offset_t pos = header.scan( execReport.start, len );
     ExecutionReport er;
-    pos = er.scan( execReport.start + pos, len - pos );
+    auto parseBack = [&]( int line )
+    {
+        std::cout << " --- line : " << line << " --- " << std::endl;
+        chksum = computeChecksum( execReport.start, execReport.end - 7 );
+        len = execReport.end - execReport.start;
+        header.reset();
+        pos = header.scan( execReport.start, len );
+        er.reset();
+        pos = er.scan( execReport.start + pos, len - pos );
+        CHECK_EQ( exec report all scanned, header.getMessageLength() + er.getMessageLength(), (size_t)len )
+        CHECK_EQ( exec report no bad fields, er.findBadField() == nullptr, true )
+        CHECK_EQ( exec report check sum, er.getCheckSum(), chksum )
+        std::cout << std::endl;
+    };
 
+    parseBack( __LINE__ );
+
+    for( int foo = 0; foo < 2; ++foo )
+    {
     execReport.rewind( sendingTimeLength );
     execReport.sendingTime.update();
     execReport.append<ClOrdID>("OID4567");
     execReport.append<TransactTime>( execReport.userTime1 );
-    execReport.append<QtyType>( QtyTypeEnums::UNITS.value );
+    execReport.append<QtyType>( QtyTypeEnums::UNITS );
     execReport.append<Price>( 21123.04567, 2 );
     execReport.setSeqnumAndUpdateHeaderAndChecksum(124);
-    std::cout << computeChecksum( execReport.start, execReport.end - 7 ) << "\n";
     std::cout << fixstr( execReport.start, ttyRgbStyle ) << std::endl;
+    parseBack( __LINE__ );
 
     execReport.rewind( sendingTimeLength );
     execReport.sendingTime.update();
@@ -53,10 +69,11 @@ int main( int args, const char ** argv )
     execReport.append<TransactTime>( execReport.userTime1 );
     execReport.append<OrigClOrdID>( "2312320210" );
     execReport.append<SecurityID>("dhdddgqgddDDdwuidpdgqe");
-    execReport.append<QtyType>( QtyTypeEnums::UNITS.value );
+    execReport.append<QtyType>( QtyTypeEnums::UNITS );
     execReport.append<Price>( 312.1204567, 7 );
     execReport.setSeqnumAndUpdateHeaderAndChecksum(1);
     std::cout << fixstr( execReport.start, ttyRgbStyle ) << std::endl;
+    parseBack( __LINE__ );
 
     execReport.rewind( sendingTimeLength );
     execReport.sendingTime.update();
@@ -64,11 +81,11 @@ int main( int args, const char ** argv )
     execReport.append<TransactTime>( execReport.userTime1 );
     execReport.append<OrigClOrdID>( "2312320210" );
     execReport.append<SecurityID>("dhdddgqgddDDdwuidpdgqe");
-    execReport.append<QtyType>( QtyTypeEnums::UNITS.value );
+    execReport.append<QtyType>( QtyTypeEnums::UNITS );
     execReport.append<Price>( 312.1204567, 7 );
     execReport.setSeqnumAndUpdateHeaderAndChecksum(123456);
     std::cout << fixstr( execReport.start, ttyRgbStyle ) << std::endl;
-    execReport.rewind( sendingTimeLength );
+    parseBack( __LINE__ );
 
     execReport.rewind( sendingTimeLength );
     execReport.sendingTime.update( std::chrono::system_clock::now() + 10 * 24h );
@@ -76,46 +93,51 @@ int main( int args, const char ** argv )
     execReport.append<OrigClOrdID>( "2312320210" );
     execReport.append<SecurityID>("dhdddgqgddDDdwuidpdgqe");
     execReport.append<TransactTime>( execReport.sendingTime.begin, TimestampKeeper::DATE_TIME_NANOS_LENGTH );
-    execReport.append<Side>( SideEnums::BUY.value );
-    execReport.append<QtyType>( QtyTypeEnums::UNITS.value );
+    execReport.append<Side>( SideEnums::BUY );
+    execReport.append<QtyType>( QtyTypeEnums::UNITS );
     execReport.append<Price>( 2.12, 7 );
-    execReport.append<OrdType>( OrdTypeEnums::LIMIT.value );
+    execReport.append<OrdType>( OrdTypeEnums::LIMIT );
     execReport.setSeqnumAndUpdateHeaderAndChecksum(123);
     std::cout << fixstr( execReport.start, ttyRgbStyle ) << std::endl;
+    parseBack( __LINE__ );
 
     execReport.rewind( sendingTimeLength );
     execReport.sendingTime.update();
     execReport.append<ClOrdID>("OID123");
-    execReport.append<TransactTime>( execReport.userTime1 );
-    execReport.append<QtyType>( QtyTypeEnums::CONTRACTS.value );
+    execReport.append<TransactTime>( ClockType::now(), ClockPrecision::NANOSECONDS );
+    execReport.append<QtyType>( QtyTypeEnums::CONTRACTS );
     execReport.append<Price>( 123.04567, 4 );
     execReport.setSeqnumAndUpdateHeaderAndChecksum(1);
     std::cout << fixstr( execReport.start, ttyRgbStyle ) << std::endl;
-    execReport.rewind( sendingTimeLength );
+    parseBack( __LINE__ );
+
+    execReport.minBodyLengthWidth = 6;
+    execReport.minSeqnumWidth = 8;
+    }
 
     // second fractions
     const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 
     char timestamp_sec[ TimestampKeeper::DATE_TIME_SECONDS_LENGTH + 1 ];
-    TimestampKeeper tsSecs( timestamp_sec, TimestampKeeper::Precision::SECONDS );
+    TimestampKeeper tsSecs( timestamp_sec, ClockPrecision::SECONDS );
     tsSecs.update( now );
     timestamp_sec[ sizeof(timestamp_sec) - 1 ] = 0;
     std::cout << "seconds: " << timestamp_sec << std::endl;
 
     char timestamp_mil[ TimestampKeeper::DATE_TIME_MILLIS_LENGTH + 1 ];
-    TimestampKeeper tsMils( timestamp_mil, TimestampKeeper::Precision::MILLISECONDS );
+    TimestampKeeper tsMils( timestamp_mil, ClockPrecision::MILLISECONDS );
     tsMils.update( now );
     timestamp_mil[ sizeof(timestamp_mil) - 1 ] = 0;
     std::cout << "millis:  " << timestamp_mil << std::endl;
 
     char timestamp_mic[ TimestampKeeper::DATE_TIME_MICROS_LENGTH + 1 ];
-    TimestampKeeper tsMics( timestamp_mic, TimestampKeeper::Precision::MICROSECONDS );
+    TimestampKeeper tsMics( timestamp_mic, ClockPrecision::MICROSECONDS );
     tsMics.update( now );
     timestamp_mic[ sizeof(timestamp_mic) - 1 ] = 0;
     std::cout << "micros:  " << timestamp_mic << std::endl;
 
     char timestamp_nan[ TimestampKeeper::DATE_TIME_NANOS_LENGTH + 1 ];
-    TimestampKeeper tsNans( timestamp_nan, TimestampKeeper::Precision::NANOSECONDS );
+    TimestampKeeper tsNans( timestamp_nan, ClockPrecision::NANOSECONDS );
     tsNans.update( now );
     timestamp_nan[ sizeof(timestamp_nan) - 1 ] = 0;
     std::cout << "nanos:   " << timestamp_nan << std::endl;

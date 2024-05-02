@@ -6,6 +6,7 @@ __COPYRIGHT__
 #include <DSTINCDIR/Fields.h>
 #include <DSTINCDIR/Groups.h>
 #include <vector>
+#include <string_view>
 
 namespace DSTNAMESPACE
 {
@@ -53,6 +54,7 @@ unsigned computeChecksum( const char * begin, const char * end );
 
 unsigned parseMessageLength( const char * fix, unsigned & msgTypePos );
 
+// To be used with ostream << operator.
 struct fixstr
 {
     explicit fixstr( const char * fix, const FixFormatStyle & fstyle = defaultStyle, GetDepthMethod ind = autoIndentFields ): ptr(fix), style(fstyle), indentator{ind} {}

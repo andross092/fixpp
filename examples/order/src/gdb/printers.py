@@ -14,7 +14,8 @@ VALUE_IN_NAME = os.getenv( "FIXPP_GDB_VALUE_IN_NAME", "false" ) == "true"
 
 # constants
 OFFSET = 'offset'
-BUF = 'buf'
+BUF = '_fixPtr'
+BUFLEN = '_fixLength'
 
 if sys.version_info[0] > 2:
     Iterator = object
@@ -66,6 +67,29 @@ def getEnumName( msg, fieldName ):
             return ' ' + call(buf,offset).string()
     except gdb.error as err:
         return ''
+
+class FloatPrinter:
+
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        res = f"(({self.val.type.name}*){self.val.address})->toString(true).c_str()"
+        return gdb.parse_and_eval(res).string()
+
+    def display_hint(self):
+        return 'string'
+
+class FieldPrinter:
+
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'offset = ' + str(self.val[OFFSET])
+
+    def display_hint(self):
+        return 'string'
 
 class GroupPrinter:
 
@@ -120,6 +144,8 @@ class MessagePrinter:
                 raise StopIteration
             self.count = self.count + 1
             f = self.fields[ self.count - 1 ]
+            if isinstance(f,str) and f.startswith('_'):
+                return ( f, self.msg[f] )
             if f.name.startswith('field'):         # f.name = fieldFixName 
                 fn = f.name[ 5 : len(f.name) ]     # fn = FixName
                 fname = fn + ' ' + getFieldTag( self.msg, f.name ) + ' @ ' + str(self.msg[f.name][OFFSET])
@@ -137,6 +163,8 @@ class MessagePrinter:
     def __init__ (self,val):
         self.msg = val
         self.fields = []
+        self.fields.append(BUF)
+        self.fields.append(BUFLEN)
         if val[BUF] != 0:
             for f in self.msg.type.fields():
                 if f.type and f.type.name:
@@ -163,6 +191,8 @@ def build_fix_printers():
     pp.add_printer( 'order::GroupNestedPartyIDs::Array', '^std::vector\<order::GroupNestedPartyIDs,.*\>$', GroupPrinter )
     pp.add_printer( 'order::GroupLegs', '^order::GroupLegs$', MessagePrinter )
     pp.add_printer( 'order::GroupLegs::Array', '^std::vector\<order::GroupLegs,.*\>$', GroupPrinter )
+    pp.add_printer( 'order::Field', '^order::Field\<.*\>$', FieldPrinter )
+    pp.add_printer( 'order::Float', '^order::Float$', FloatPrinter )
     return pp
 
 gdb.printing.register_pretty_printer( gdb.current_objfile(), build_fix_printers() )

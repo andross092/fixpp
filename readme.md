@@ -1,57 +1,48 @@
 # fixpp stands for FIX by C++ PreProcessor
 
-* [Motivation](#motivation)
-* [Performance](#performance)
-* [Screenshots](#screenshots)
-  - [TTY output](#tty-output)
-  - [Debugger view in vscode](#debugger-view-in-vscode)
-* [Input](#input)
-* [Output](#output)
-* [Decode messages](#decode-messages)
-  - [Use ParserDispatcher](#use-parserdispatcher)
-  - [How to read from socket or file](#how-to-read-from-socket-or-file)
-  - [DIY](#diy)
-* [Sending API](#sending-api)
-  - [FixBufferStream](#)
-  - [ReusableMessageBuilder](#)
-* [Examples](#examples)
-* [Custom HTML output](#custom-html-output)
-
 ## Motivation
-The idea is to use CPP preprocessing instructions along with standard Linux CLI tools(bash,sed,grep) to generate a FIX API for a given venue.
+The idea is to use CPP preprocessing instructions along with standard Linux CLI tools(bash,sed,grep) to generate FIX API for a given venue.
 
 Mindset:
 
 * No third party dependencies. All the generated code is yours and can go straight into your lib or app.
 * Repeating groups are supported.
 * You can strip off all useless standard FIX tags to fit your venue specs.
+* FIX tags and enums are treated as integers and not strings thus removing transformations.
 
 Receiving ([read more](#input)):
 
 * Lightweight and low latency FIX parsing with reusable memory and objects.
+* Optional message sanity checks are available.
 * Flexible formatting with available predefined TTY color styles.
 * Pretty printing with GDB and VSCode.
 
 Sending ([read more](#sending-api)):
 
 * Low latency FIX message building with reusable memory and objects.
-* For a given message type, only fields changing between two sends are to be updated. 
+* For a given message type, only fields changing between two sends are to be updated.
+* BodyLength and MsgSeqNum fields can be zero padded to reduce memory copies.
 
 You have to know:
 
-* fixpp is not a FIX engine (yet)
-* it runs in an optimistic mode and relies on the venue FIX conformance (this saves quite a few CPU cycles...)
+* `fixpp` is not a FIX engine (yet)
+* it performs better in an optimistic mode and relies on the venue FIX conformance (this saves quite a few CPU cycles...)
+* a bit slower but safer parsing is available as well (it detects bad fields, groups and enums during message scan)
 
 ## Performance
 
-> Results obtained in a tight loop on i9-9900K @ 5GHz
+Tags and enums are not converted. For instance the sequence like `"|49="` will be inserted as a single integer assignment with value `0x3d'39'34'01`. On reception, the string `"49"` will not be translated to decimal value 49 but rather reinterpreted as `0x39'34`.
 
-| action | message type | length | time, ns | CPU cycles | HW instructions |
-|--------|--------------|--------|----------|------------|-----------------|
-| decode | ExecReport   |    170 |       75 |        375 |             911 |
-| decode | MarketDataSnapshotFullRefresh*  |    330 |       122 |        608 |             1647 |
-| encode | NewOrderSingle |    170 |       68 |        338 |             909 |
-| update | NewOrderSingle |    170 |       61 |        303 |             821 |
+> Results obtained in a tight loop on an i7-1360P @ 5GHz
+
+|         action |                    message type | length | time, ns | CPU cycles | HW instructions |
+|----------------|---------------------------------|--------|----------|------------|-----------------|
+| trusted decode | ExecReport                      |    170 |       74 |        370 |             912 |
+| safe decode    | ExecReport                      |    170 |      104 |        518 |            1694 |
+| trusted decode | MarketDataSnapshotFullRefresh*  |    330 |      116 |        580 |            1797 |
+| safe decode    | MarketDataSnapshotFullRefresh*  |    330 |      122 |        610 |            2708 |
+| encode         | NewOrderSingle                  |    170 |       55 |        273 |             897 |
+| update         | NewOrderSingle                  |    170 |       25 |        112 |             376 |
 
 \* 6 repeating groups
 
@@ -66,7 +57,8 @@ You have to know:
 
 ## Input
 
-Based on your venue FIX API prepare files `Fields.def`, `Groups.def` and `Messages.def`. One can pick up ready to use files from examples/spec and adjust `Groups.def` and `Messages.def`. `Fields.def` will be cleaned automatically during generation.
+Based on your venue FIX API prepare files `Fields.def`, `Groups.def` and `Messages.def`. One can pick up ready to use files from [examples/spec](examples/spec) and adjust `Groups.def` and `Messages.def`. `Fields.def` will be cleaned automatically during generation.
+If you have already a [Quickfix](https://github.com/quickfix/quickfix) XML file you can use the [xml2cpp](xml2cpp) converter to generate the definitions.
 
 **src/spec/Fields.def**
 ```
@@ -142,7 +134,7 @@ FIX_MSG_END
 ...
 ```
 
-See more in `examples`.
+See more in [examples](examples).
 
 ## Output
 
@@ -186,36 +178,72 @@ MYPRJ
 
 A fully generated and committed primitive project is available in examples/order.
 
-## Decode messages
+## Receiving API
+
+### Accessing message fields
+
+```c++
+class BusinessLogic
+{
+    void onMessage( const MessageExecutionReport & msg )
+    {
+        // for mandatory fields it is safe to get the value:
+        Quantity qty = msg.getOrderQty();
+
+        // for optional fields:
+        double px = msg.isSetPrice() ? msg.getPrice() : 0;
+
+        ...
+    }
+
+    void onMessage( const MessageMarketDataSnapshotFullRefresh & msg )
+    {
+        ...
+    }
+};
+```
+
+### Scanning
+
+In most cases a latency sensitive implementation will tend to reuse objects and avoid allocations on the critical path. Here we suggest keeping a `Header` object and messages separately. The parsing is carried out in two steps:
+
+- scanning the header first,
+- then, after identifying the message type, scanning the relevant message body.
+
+```c++
+    // my class attribute:
+    Header                               _header;
+    MessageExecutionReport               _execReport;
+    MessageMarketDataSnapshotFullRefresh _mdsfr;
+    BusinessLogic                        _businessLogic;
+    ...
+    // after reading the message into fixString
+    offset_t pos = _header.scan( fixString.data(), fixString.size() );
+    switch( _header_.getRawMsgType() )
+    {
+        case MsgTypeRaw_EXECUTION_REPORT:
+            _msgExecutionReport.scan( fixString.data() + pos, fixString.size() - pos );
+            _businessLogic.onMessage( _execReport );
+            break;
+
+        case MsgTypeRaw_MARKET_DATA_SNAPSHOT_FULL_REFRESH:
+            _mdsfr.scan( fixString.data() + pos, fixString.size() - pos );
+            _businessLogic.onMessage( _mdsfr );
+            break;
+        ...
+    }
+```
+
 
 ### Use ParserDispatcher
+
+`fixpp` generates a class `ParserDispatcher` implementing the above switch. You have just to override `onMessage(...)` methods.
 
 ```cpp
 #include <tiny/Messages.h>
 #include <cstring>
-#include <sstream>
 
-#define I "\001"
-
-const char * buffer = 
-// exec report
-"8=FIX.4.4" I "9=156" I "35=8" I "49=foo" I "56=bar" I "52=20071123-05:30:00.000" I "11=OID123456" I "150=E" I "39=A" I "55=XYZ" I "167=CS" I "54=1" I "38=15" I "40=2" I "44=15.001" I "58=EQUITYTESTING" I "59=0" I "32=0" I "31=0" I "151=15" I "14=0" I "6=0" I "10=118" I
-
-// large exec report
-"8=FIX.4.4" I "9=332" I "35=8" I "49=foo" I "56=bar" I "52=20071123-05:30:00.000" I "11=OID123456" I "150=E" I "39=A" I "55=XYZ" I "167=CS" I "54=1" I "38=15" I "40=2" I "44=15.001" I "58=EQUITYTESTING" I "59=0" I "32=0" I "31=0" I "151=15" I "14=0" I "6=0" I 
-"555=2" I "600=SYM1" I "624=0" I "687=10" I "683=1" I
-                             "688=A" I "689=a" I
-                             "564=1" I
-                             "539=2" I "524=PARTY1" I "525=S" I
-                                   "524=PARTY2" I "525=S" I
-                                   "804=2" I "545=S1" I "805=1" I "545=S2" I "805=2" I
-      "600=SYM2" I "624=1" I "687=20" I "683=2" I
-                             "688=A" I "689=a" I
-                             "688=B" I "689=b" I
-"10=027" I
-
-// md full refresh
-"8=FIX.4.4" I "9=315" I "35=W" I "49=foo" I "56=bar" I "34=1234" I "52=20190101-01:01:01.000" I "55=EUR/USD" I "268=6" I "269=1" I "290=1" I "270=1.21" I "15=USD" I "271=1000000" I "269=1" I "290=2" I "270=1.211" I "15=USD" I "271=2000000" I "269=1" I "290=3" I "270=1.221" I "15=USD" I "271=3000000" I "269=1" I "290=4" I "270=1.2315" I "15=USD" I "271=4000000" I "269=0" I "290=5" I "270=1.201" I "15=USD" I "271=1000000" I "269=0" I "290=6" I "270=1.205" I "15=USD" I "271=2000000" I "10=075" I;
+const char * buffer = "8=FIX.4.4" I "9=156" I "35=8" I ... I "10=075" I;
 
 using namespace venue::fix;
 
@@ -254,12 +282,12 @@ int main( int args, const char ** argv )
 ### How to read from socket or file
 
 ```cpp
-    constexpr unsigned begStrAndBodyLenBytes = 20; // reasonably large initial number of bytes to read
+    constexpr unsigned begStrAndBodyLenBytes = MESSAGE_BEGIN_MIN_BYTES_TO_READ;
     std::vector<char> recvbuffer( 4096 );
     while( source.read( &recvbuffer[0], begStrAndBodyLenBytes ) )
     {
         unsigned msgTypeOffset;
-        len = parseMessageLength( &recvbuffer[0], msgTypeOffset ) + 7; // 7 = chsum length
+        len = parseMessageLength( &recvbuffer[0], msgTypeOffset ) + CHECKSUM_FIELD_LENGTH;
         if( recvbuffer.size() < len + msgTypeOffset )
         {
             recvbuffer.insert( recvbuffer.end(), len + msgTypeOffset - recvbuffer.size() + 100 , 0 );
@@ -273,7 +301,7 @@ int main( int args, const char ** argv )
         {
             break;
         }
-        
+
     }
 ```
 ### DIY
@@ -282,7 +310,7 @@ int main( int args, const char ** argv )
 #include <myprj/fix/Messages.h>
 
 const char * execReport = "8=FIX.4.4" I "9=332" I "35=8" I "49=foo" I "56=bar" I "52=20071123-05:30:00.000" I
-"11=OID123456" I "150=E" I "39=A" I "55=XYZ" I "167=CS" I "54=1" I "38=15" I "40=2" I "44=15.001" I "58=EQUITYTESTING" I "59=0" I "32=0" I "31=0" I "151=15" I "14=0" I "6=0" I 
+"11=OID123456" I "150=E" I "39=A" I "55=XYZ" I "167=CS" I "54=1" I "38=15" I "40=2" I "44=15.001" I "58=EQUITYTESTING" I "59=0" I "32=0" I "31=0" I "151=15" I "14=0" I "6=0" I
 "555=2" I "600=SYM1" I "624=0" I "687=10" I "683=1" I
                              "688=A" I "689=a" I
                              "564=1" I
@@ -294,7 +322,7 @@ const char * execReport = "8=FIX.4.4" I "9=332" I "35=8" I "49=foo" I "56=bar" I
                              "688=B" I "689=b" I
 "10=027" I;
 
-    
+
 
     using namespace venue::fix;
     ...
@@ -305,23 +333,23 @@ const char * execReport = "8=FIX.4.4" I "9=332" I "35=8" I "49=foo" I "56=bar" I
 
     MessageExecutionReport er;
     pos = er.scan( execReport + pos, strlen( execReport ) - pos );
-    
+
     // print single field value
     std::cout << ' ' << FixOrdStatus << " = " << er.getOrdStatus() << std::endl;
 
     // print entire message
     std::cout << "\n\n -- Pretty Printing --" << std::endl;
-    
+
     // use operator <<
     std::cout << fixstr( execReport, ttyRgbStyle ) << std::endl;
 
     // print flat and advance pos
     pos = 0;
     fixToHuman( execReport, pos, std::cout, ttyRgbStyle ) << std::endl;
-    
+
     // indent groups
     pos = 0;
-    fixToHuman( execReport, pos, std::cout, ttyRgbStyle, MessageExecutionReport::getFieldDepth ) << std::endl;    
+    fixToHuman( execReport, pos, std::cout, ttyRgbStyle, MessageExecutionReport::getFieldDepth ) << std::endl;
 
     // iterate over groups
     if( er.isSetNoLegs() )
@@ -339,7 +367,7 @@ const char * execReport = "8=FIX.4.4" I "9=332" I "35=8" I "49=foo" I "56=bar" I
 
 ## Sending API
 
-You will have to include SenderApi.h to build FIX messages with fixpp. It offers both 
+You will have to include SenderApi.h to build FIX messages with `fixpp`. It offers both
 - low level buffer construction with FixBufferStream
 - and reusable memory approach with ReusableMessageBuilder
 
@@ -349,7 +377,7 @@ This structure has two attributes: `begin` and `end`. Respectively pointing to t
 Each time a new field is inserted `end` will shift forward accordingly. In most cases the fields will be appended as tag-value pairs:
 ```cpp
 execReport.append<ClOrdID>("OID4567");
-execReport.append<QtyType>( QtyTypeEnums::UNITS.value );
+execReport.append<QtyType>( QtyTypeEnums::UNITS );
 execReport.append<Price>( 21123.04567, 2 );
 ```
 
@@ -369,7 +397,7 @@ This structure inherits the `begin` and `end` pointers from FixBufferStream. But
 buffer   start                msgType                                    sendingTime                  body
 |        |                    |                                          |                            |
 "..."   "8=FIX.4.4" I "9=315" I "35=W" I "49=foo" I "56=bar" I "34=1234" I "52=20190101-01:01:01.000" I "..."
-                                                                         |                            | 
+                                                                         |                            |
                                                                          begin                        end
 ```
 
@@ -426,7 +454,7 @@ A typical scenario will be
 
 ## Examples
 
-To compile the examples you wil have to clone the makefile project next to fixpp:
+To compile the examples you wil have to clone the makefile project next to `fixpp`:
 ```
 $> git clone https://github.com/sashamakarenko/makefile.git makefile
 $> git clone https://github.com/sashamakarenko/fixpp.git fixpp
@@ -435,44 +463,43 @@ $> make
 $> make check
 ```
 
-- `fix44` all committed complete lib with all FIX4.4 messages
-- `fixdump` tool to decode FIX messages
-- `odd` lib with unit tests with irregular messages
-- `tiny` venue specific example with unit tests
-- `order` all committed primitive project only with NewOrderSingle and ExecutionReport
-- `spec` input files for different FIX standards
+- [fix44](examples/fix44) all committed complete lib with all FIX4.4 messages
+- [fixdump](examples/fixdump) tool to decode FIX messages
+- [odd](examples/odd) lib with unit tests with irregular messages
+- [tiny](examples/tiny) venue specific example with unit tests
+- [order](examples/order) all committed primitive project only with NewOrderSingle and ExecutionReport
+- [spec](examples/spec) input files for different FIX standards
 
 ## Custom HTML output
 ```cpp
 const FixFormatStyle htmlRgbStyle =
 {
-    "<pre>",  //  messageBegin 
-    "</pre>",  //  messageEnd
-    "  ",//  indent
-    "  ",//  groupFirstField;
-    " ", //  fieldBegin   
-    "\n",//  fieldEnd     
-    "<font color=\"#444444\">",  //  headerTagNameStart 
-    "</font>",  //  headerTagNameStop  
-    "<font color=\"black\"><b>",  //  tagNameStart 
-    "</b></font>",  //  tagNameStop  
-    "<font color=\"grey\">(", //  tagValueStart
-    ")</font>", //  tagValueStop 
-    " = ", //  equal        
-    "<font color=\"darkblue\">",  //  valueStart   
-    "</font>",  //  valueStop    
-    " <font color=\"darkgreen\">", //  enumStart    
-    "</font>",  //  enumStop     
-    "<font color=\"red\">",  //  unknownStart
-    "</font>"      //  unknownStop
+    .messageBegin =       "<pre>",
+    .messageEnd =         "</pre>",
+    .indent =             "  ",
+    .groupFirstField =    " &#x2022;",
+    .fieldBegin =         " ",
+    .fieldEnd =           "\n",
+    .headerTagNameStart = "<font color=\"#444444\">",
+    .headerTagNameStop =  "</font>",
+    .tagNameStart =       "<font color=\"black\"><b>",
+    .tagNameStop =        "</b></font>",
+    .tagValueStart =      "<font color=\"grey\">(",
+    .tagValueStop =       ")</font>",
+    .equal =              " = ",
+    .valueStart =         "<font color=\"darkblue\">",
+    .valueStop =          "</font>",
+    .enumStart =          " <font color=\"darkgreen\">",
+    .enumStop =           "</font>",
+    .unknownStart =       "<font color=\"red\">",
+    .unknownStop =        "</font>"
 };
-
 ...
 
     std::ofstream html;
     html.open( "mdfr.html" );
     pos = 0;
-    fixToHuman( mdFullRefresh, pos, html, htmlRgbStyle, autoIndentFields );        
+    fixToHuman( mdFullRefresh, pos, html, htmlRgbStyle, autoIndentFields );
     html.close();
 
 ```
@@ -524,25 +551,25 @@ Show message as HTML table:
 ```cpp
 const FixFormatStyle htmlTableRgbStyle =
 {
-    "<pre><table>",  //  messageBegin 
-    "</table></pre>",  //  messageEnd
-    "&nbsp;&nbsp;",//  indent
-    "&nbsp;&#x2022;",//  groupFirstField;
-    "<tr><td>", //  fieldBegin   
-    "</td></tr>\n",//  fieldEnd     
-    "<font color=\"#444444\">",  //  headerTagNameStart 
-    "</font>",  //  headerTagNameStop  
-    "<font color=\"black\"><b>",  //  tagNameStart 
-    "</b></font>",  //  tagNameStop  
-    "<font color=\"grey\">(", //  tagValueStart
-    ")</font>", //  tagValueStop 
-    " </td><td> ", //  equal        
-    "<font color=\"darkblue\">",  //  valueStart   
-    "</font>",  //  valueStop    
-    " <font color=\"darkgreen\">", //  enumStart    
-    "</font>",  //  enumStop     
-    "<font color=\"red\">",  //  unknownStart
-    "</font>"      //  unknownStop
+    .messageBegin       = "<pre><table>",
+    .messageEnd         = "</table></pre>",
+    .indent             = "&nbsp;&nbsp;",
+    .groupFirstField    = "&nbsp;&#x2022;",
+    .fieldBegin         = "<tr><td>",
+    .fieldEnd           = "</td></tr>\n",
+    .headerTagNameStart = "<font color=\"#444444\">",
+    .headerTagNameStop  = "</font>",
+    .tagNameStart       = "<font color=\"black\"><b>",
+    .tagNameStop        = "</b></font>",
+    .tagValueStart      = "<font color=\"grey\">(",
+    .tagValueStop       = ")</font>",
+    .equal              = " </td><td> ",
+    .valueStart         = "<font color=\"darkblue\">",
+    .valueStop          = "</font>",
+    .enumStart          = " <font color=\"darkgreen\">" ,
+    .enumStop           = "</font>",
+    .unknownStart       = "<font color=\"red\">",
+    .unknownStop        = "</font>"
 };
 ```
 

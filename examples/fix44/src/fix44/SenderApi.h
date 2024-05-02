@@ -7,7 +7,6 @@
 
 #include <fix44/Messages.h>
 #include <cstring>
-#include <type_traits>
 #include <chrono>
 
 #ifndef likely
@@ -86,48 +85,8 @@ inline int uintWidth( unsigned value )
     return 10;
 }
 
-inline int uintWidth2( unsigned value )
-{
-    if( value < 100000U )
-    {
-        if( value < 10U )
-        {
-            return 1;
-        }
-        if( value < 100U )
-        {
-            return 2;
-        }
-        if( value < 1000U )
-        {
-            return 3;
-        }
-        if( value < 10000U )
-        {
-            return 4;
-        }
-        return 5;
-    }
-    if( value < 1000000U )
-    {
-        return 6;
-    }
-    if( value < 10000000U )
-    {
-        return 7;
-    }
-    if( value < 100000000U )
-    {
-        return 8;
-    }
-    if( value < 1000000000U )
-    {
-        return 9;
-    }
-    return 10;
-}
-
-// suitable for seqnums and message length
+// Suitable for seqnums and message length.
+// value < 1000000
 inline int smallUintWidth( unsigned value )
 {
     if( value < 1000U )
@@ -149,6 +108,8 @@ inline int smallUintWidth( unsigned value )
     return 7;
 }
 
+// Formats value from right to left.
+// @return next left most position.
 inline char * reverseUIntToString( char * ptr, unsigned value )
 {
     do
@@ -159,6 +120,8 @@ inline char * reverseUIntToString( char * ptr, unsigned value )
     return ptr;
 }
 
+// Formats value from right to left and computes check sum of the inserted string.
+// @return next left most position.
 inline char * reverseUIntToString( char * ptr, unsigned value, unsigned & chksum )
 {
     do
@@ -171,11 +134,40 @@ inline char * reverseUIntToString( char * ptr, unsigned value, unsigned & chksum
     return ptr;
 }
 
-struct TimestampKeeper;
+// Formats value from right to left, zero pads it if necesary, and computes check sum of the inserted string.
+// @return next left most position.
+inline char * reversePaddedUIntToString( char * ptr, unsigned value, unsigned width, unsigned & chksum )
+{
+    char * oldptr = ptr;
+    ptr = reverseUIntToString( ptr, value, chksum );
+    for( unsigned insertedWidth = (unsigned)( oldptr - ptr ); insertedWidth < width; ++insertedWidth )
+    {
+        *(--ptr) = '0';
+        chksum += (unsigned)'0';
+    }
+    return ptr;
+}
 
+struct TimestampKeeper;
+using ClockType = std::chrono::system_clock;
+using TimePoint = std::chrono::time_point<ClockType>;
+
+enum class ClockPrecision: unsigned
+{
+    SECONDS      = 0,
+    MILLISECONDS = 3,
+    MICROSECONDS = 6,
+    NANOSECONDS  = 9
+};
+
+// Used to build FIX messages.
 struct FixBufferStream
 {
-    FixBufferStream( char * buf ): begin{buf}, end{buf} {}
+    explicit FixBufferStream( char * buf )
+    : begin{ buf }
+    , end  { buf }
+    {
+    }
 
     template< typename FIELD >
     FixBufferStream & pushTag()
@@ -276,7 +268,13 @@ struct FixBufferStream
         return *this;
     }
 
-    inline FixBufferStream & pushValue( TimestampKeeper & tk );
+    FixBufferStream & pushValue( const Float & v )
+    {
+        end = v.format( end );
+        return *this;
+    }
+
+    inline FixBufferStream & pushValue( TimestampKeeper & tk, const TimePoint & tp );
 
     template< typename FIELD >
     FixBufferStream & append( const char * v, unsigned len )
@@ -300,48 +298,57 @@ struct FixBufferStream
     }
 
     template< typename FIELD >
-    FixBufferStream & append( TimestampKeeper & v )
+    FixBufferStream & append( TimestampKeeper & v, const TimePoint & tp = ClockType::now() )
     {
         end = insert<FIELD>(end);
-        return pushValue( v );
+        return pushValue( v, tp );
     }
+
+    template< typename FIELD >
+    FixBufferStream & append( const FieldEnum< typename FIELD::ValueType > & item  )
+    {
+        return append<FIELD>( item.value );
+    }
+
+    // not efficient
+    template< typename FIELD >
+    FixBufferStream & append( const TimePoint & tp, ClockPrecision precision );
 
     char * begin;
     char * end;
 };
 
+constexpr unsigned BODY_LENGTH_OFFSET = FixBeginStringInsertableTagLength + FieldBodyLength::INSERTABLE_TAG_WIDTH;
+
+// Precompute Header per session and msg type and insert as a single memcpy only if seqnum width changes.
+//
 //  buffer   start                msgType                                    sendingTime                  body
 //  |        |                    |                                          |                            |
 //  "..."   "8=FIX.4.4" I "9=315" I "35=W" I "49=foo" I "56=bar" I "34=1234" I "52=20190101-01:01:01.000" I "..."
 //           ----------------***  -------------------------------------****              --------========
-//           precompute per session and msg type and insert as a single
-//           memcpy only if seqnum width changes
 //
-
-constexpr unsigned BODY_LENGTH_OFFSET = FixBeginStringInsertableTagLength + FieldBodyLength::INSERTABLE_TAG_WIDTH;
 struct HeaderTemplate: FixBufferStream
 {
     HeaderTemplate( unsigned capacity, const std::string & msgType )
     : FixBufferStream( nullptr )
     , buffer( capacity, (char)0 )
     , chksum( 0 )
+    , countableLength( 0 )
     {
         begin = end = &buffer[0];
         end = insert<FieldBeginString>( end );
         end = insert<FieldBodyLength>( end );
-        end = insert<FieldMsgType>( end );
-        memcpy( end, msgType.data(), msgType.size() );
-        end += msgType.size();
+        append<FieldMsgType>( msgType );
     }
 
-    HeaderTemplate():
-        FixBufferStream( nullptr ),
-        buffer(),
-        chksum( 0 )
+    HeaderTemplate()
+    : FixBufferStream( nullptr )
+    , buffer()
+    , chksum( 0 )
     {
     }
 
-    // returns countable body length [I 35=.....34=]
+    // Returns countable body length [I 35=.....34=]
     unsigned finalize()
     {
         chksum = computeChecksum( begin, end );
@@ -349,18 +356,15 @@ struct HeaderTemplate: FixBufferStream
     }
 
     std::vector<char> buffer;
-    unsigned          chksum, countableLength;
+    unsigned          chksum;
+    unsigned          countableLength;
 };
 
+// Reusable timestamp strcuture.
+// Updates only changed values - mostly time since date doesn't change often.
 struct TimestampKeeper
 {
-    enum class Precision: unsigned
-    {
-        SECONDS      = 0,
-        MILLISECONDS = 3,
-        MICROSECONDS = 6,
-        NANOSECONDS  = 9
-    };
+    using Precision = ClockPrecision;
 
     // YYYYMMDD-HH:MM:SS.mmmnnnuuu
     constexpr static unsigned DATE_LENGTH              = 8;
@@ -368,17 +372,20 @@ struct TimestampKeeper
     constexpr static unsigned DATE_TIME_MILLIS_LENGTH  = 21;
     constexpr static unsigned DATE_TIME_MICROS_LENGTH  = 24;
     constexpr static unsigned DATE_TIME_NANOS_LENGTH   = 27;
-    constexpr static const char * const PLACE_HOLDER = "11112233-44:55:66.777888999";
+    constexpr static const char * const PLACE_HOLDER   = "11112233-44:55:66.777888999";
 
-    inline unsigned length() const { return DATE_TIME_SECONDS_LENGTH + ( secFraction != Precision::SECONDS ? 1 : 0 ) + (unsigned)secFraction; }
+    inline unsigned length() const
+    {
+        return DATE_TIME_SECONDS_LENGTH + ( secFraction != Precision::SECONDS ? 1 : 0 ) + (unsigned)secFraction;
+    }
 
-    TimestampKeeper( char * buffer = nullptr, Precision secPrecision = Precision::SECONDS )
-    : startOfDay  ( 0 )
-    , endOfDay    ( 0 )
-    , begin       ( buffer )
-    , lastSecond  ( 0 )
-    , lastFraction( 0 )
-    , secFraction ( secPrecision )
+    explicit TimestampKeeper( char * buffer = nullptr, Precision secPrecision = Precision::SECONDS )
+    : startOfDay  { 0 }
+    , endOfDay    { 0 }
+    , begin       { buffer }
+    , lastSecond  { 0 }
+    , lastFraction{ 0 }
+    , secFraction { secPrecision }
     {
     }
 
@@ -387,7 +394,7 @@ struct TimestampKeeper
         return DATE_TIME_SECONDS_LENGTH + 1 + (unsigned)secFraction;
     }
 
-    unsigned fill( char * buffer, Precision secPrecision )
+    unsigned fill( char * buffer, Precision secPrecision, const TimePoint & tp = ClockType::now() )
     {
         if( begin != buffer or secFraction != secPrecision )
         {
@@ -400,7 +407,7 @@ struct TimestampKeeper
         }
         if( buffer )
         {
-            update();
+            update( tp );
             return getWidth();
         }
         return 0;
@@ -418,19 +425,19 @@ struct TimestampKeeper
         return getWidth();
     }
 
-    char * update( const std::chrono::time_point<std::chrono::system_clock> & now = std::chrono::system_clock::now() )
+    char * update( const TimePoint & tp = ClockType::now() )
     {
-        const std::time_t tnow = std::chrono::system_clock::to_time_t(now);
-        if( tnow < startOfDay or tnow >= endOfDay )
+        const std::time_t tpt = ClockType::to_time_t( tp );
+        if( tpt < startOfDay or tpt >= endOfDay )
         {
-            startOfDay = tnow - ( tnow % ( 3600 * 24 ) );
+            startOfDay = tpt - ( tpt % ( 3600 * 24 ) );
             endOfDay = startOfDay + 3600 * 24;
             std::tm tm;
-            gmtime_r( & tnow, &tm );
+            gmtime_r( &tpt, &tm );
             std::strftime( begin, 64, "%Y%m%d-%H:%M:%S", &tm );
         }
 
-        unsigned diff = tnow - startOfDay;
+        unsigned diff = tpt - startOfDay;
         if( lastSecond != diff )
         {
             uint16_t hours   = diff / 3600;
@@ -452,15 +459,15 @@ struct TimestampKeeper
             unsigned fraction = 0;
             if( secFraction == Precision::MILLISECONDS )
             {
-                fraction = std::chrono::time_point_cast<std::chrono::milliseconds>(now).time_since_epoch().count() % 1000;
+                fraction = std::chrono::time_point_cast<std::chrono::milliseconds>(tp).time_since_epoch().count() % 1000;
             }
             else if( secFraction == Precision::MICROSECONDS )
             {
-                fraction = std::chrono::time_point_cast<std::chrono::microseconds>(now).time_since_epoch().count() % 1000'000;
+                fraction = std::chrono::time_point_cast<std::chrono::microseconds>(tp).time_since_epoch().count() % 1000'000;
             }
             else // nanos
             {
-                fraction = std::chrono::time_point_cast<std::chrono::nanoseconds>(now).time_since_epoch().count() % 1000'000'000;
+                fraction = std::chrono::time_point_cast<std::chrono::nanoseconds>(tp).time_since_epoch().count() % 1000'000'000;
             }
             if( fraction != lastFraction )
             {
@@ -477,17 +484,27 @@ struct TimestampKeeper
         return begin + len;
     }
 
-    time_t    startOfDay, endOfDay;
+    time_t    startOfDay;
+    time_t    endOfDay;
     char    * begin;
-    unsigned  lastSecond, lastFraction;
+    unsigned  lastSecond;
+    unsigned  lastFraction;
     Precision secFraction;
 };
 
-FixBufferStream & FixBufferStream::pushValue( TimestampKeeper & tk )
+FixBufferStream & FixBufferStream::pushValue( TimestampKeeper & tk, const TimePoint & tp )
 {
-    tk.fill( end, tk.secFraction );
+    tk.fill( end, tk.secFraction, tp );
     end += tk.length();
     return *this;
+}
+
+template< typename FIELD >
+inline FixBufferStream & FixBufferStream::append( const TimePoint & tp, ClockPrecision precision )
+{
+    end = insert<FIELD>(end);
+    TimestampKeeper tmp( nullptr, precision );
+    return pushValue( tmp, tp );
 }
 
 // basic types
@@ -514,6 +531,11 @@ inline unsigned valueMaxLength( const sohstr & v )
     return pos-1;
 }
 
+inline unsigned valueMaxLength( const Float & v )
+{
+    return Float::MAX_DIGITS + 5;
+}
+
 inline unsigned valueMaxLength( const char * & v )
 {
     return strlen(v);
@@ -521,37 +543,46 @@ inline unsigned valueMaxLength( const char * & v )
 
 /*
 
+Convenience class to reuse header, timestamps and the buffer.
+
 buffer   start                msgType                                    sendingTime                  body
 |        |                    |                                          |                            |
 "..."   "8=FIX.4.4" I "9=315" I "35=W" I "49=foo" I "56=bar" I "34=1234" I "52=20190101-01:01:01.000" I "..."
                          ---                                       ----  |                            |
                          | body length and seqno will be updated   |     begin                        end
 
+Since header length depends on seqnum and body length, start is not usable before calling setSeqnumAndUpdateHeaderAndChecksum().
 */
 struct ReusableMessageBuilder: FixBufferStream
 {
     ReusableMessageBuilder( const std::string & messageType, unsigned maxBodyLength, unsigned headerTemplateCapacity = 128 )
     : FixBufferStream    ( nullptr )
+    , msgType            ( messageType )
     , buffer             ( maxBodyLength + 1, (char)0 )
     , start              ( nullptr )
     , lastSeqnumWidth    ( 0 )
+    , minSeqnumWidth     ( 1 )
     , lastBodyLengthWidth( 0 )
+    , minBodyLengthWidth ( 2 )
     , bufferGrowChunk    ( 1024 )
     , header             ( headerTemplateCapacity, messageType )
-    , msgType            ( messageType )
     {
         begin = end = &buffer[0] + headerTemplateCapacity;
     }
 
+    ReusableMessageBuilder( const ReusableMessageBuilder & ) = delete;
+
+    // To be called just before sending.
+    // Header is supposed to be updated by this time.
     const char * setSeqnumAndUpdateHeaderAndChecksum( unsigned seqnum )
     {
         unsigned chksum = header.chksum;
-        char * ptr = reverseUIntToString( begin, seqnum, chksum );
+        char * ptr = reversePaddedUIntToString( begin, seqnum, minSeqnumWidth, chksum );
         unsigned seqnumWidth = begin - ptr;
         unsigned bodyLength = header.countableLength + seqnumWidth + ( end - begin );
 
         char * msgTypePtr = begin - header.countableLength - seqnumWidth;
-        ptr = reverseUIntToString( msgTypePtr, bodyLength, chksum );
+        ptr = reversePaddedUIntToString( msgTypePtr, bodyLength, minBodyLengthWidth, chksum );
         unsigned bodyLengthWidth = msgTypePtr - ptr;
 
         start = begin - seqnumWidth - header.countableLength - bodyLengthWidth - BODY_LENGTH_OFFSET;
@@ -583,12 +614,13 @@ struct ReusableMessageBuilder: FixBufferStream
         end = begin + pos;
     }
 
-    // start is not necessary to update here
+    // Resizes the buffer if necessary to receive next value.
+    // start will be updated in setSeqnumAndUpdateHeaderAndChecksum().
     void resizeIfNecessary( unsigned valueLength )
     {
         valueLength += 8; // max "|tag=" length ?
         auto endOffset = end - &buffer[0];
-        if( endOffset + valueLength >= buffer.size() )
+        if( endOffset + (ssize_t)valueLength >= (ssize_t)buffer.size() )
         {
             auto beginOffset = begin - &buffer[0];
             buffer.resize( ( 1 + ( endOffset + valueLength ) / bufferGrowChunk ) * bufferGrowChunk );
@@ -596,6 +628,9 @@ struct ReusableMessageBuilder: FixBufferStream
             end   = &buffer[0] + endOffset;
         }
     }
+
+    // Methods resizing the buffer if necessary.
+    // Otherwise use FixBufferStream::append().
 
     template< typename FIELD >
     FixBufferStream & appendSafely( const char * v, unsigned len )
@@ -621,14 +656,24 @@ struct ReusableMessageBuilder: FixBufferStream
         return pushValue( v, precision );
     }
 
+    template< typename FIELD >
+    FixBufferStream & appendSafely( const FieldEnum< typename FIELD::ValueType > & item  )
+    {
+        resizeIfNecessary( valueMaxLength( item.value ) );
+        return append<FIELD>( item.value );
+    }
+
     const std::string             msgType;
     std::vector<char>             buffer;
     char                        * start;
-    unsigned                      lastSeqnumWidth, lastBodyLengthWidth;
+    unsigned                      lastSeqnumWidth;
+    unsigned                      minSeqnumWidth;
+    unsigned                      lastBodyLengthWidth;
+    unsigned                      minBodyLengthWidth;
     unsigned                      bufferGrowChunk;
     HeaderTemplate                header;
     TimestampKeeper               sendingTime;
-    TimestampKeeper               userTime1;
+    TimestampKeeper               userTime1; // user defined timestamps
     TimestampKeeper               userTime2;
     TimestampKeeper               userTime3;
     TimestampKeeper               userTime4;

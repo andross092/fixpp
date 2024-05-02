@@ -1,5 +1,5 @@
 #include <tiny/SenderApi.h>
-#include "Helper.h"
+#include <utests/TrivialHelper.h>
 
 using namespace tiny;
 using namespace tiny::field;
@@ -18,10 +18,8 @@ int main( int args, const char ** argv )
     execReport.appendSafely<SendingTime>( TimestampKeeper::PLACE_HOLDER, TimestampKeeper::DATE_TIME_NANOS_LENGTH );
     execReport.sendingTime.setup( execReport.end - TimestampKeeper::DATE_TIME_NANOS_LENGTH, TimestampKeeper::Precision::NANOSECONDS );
     execReport.sendingTime.update();
-    const unsigned sendingTimeLength = execReport.end - execReport.begin;
-
     execReport.appendSafely<ClOrdID>("OID123");
-    execReport.appendSafely<QtyType>( QtyTypeEnums::CONTRACTS.value );
+    execReport.appendSafely<QtyType>( QtyTypeEnums::CONTRACTS );
     execReport.appendSafely<Price>( 123.04567, 4 );
     execReport.setSeqnumAndUpdateHeaderAndChecksum(123);
     std::cout << computeChecksum( execReport.start, execReport.end - 7 ) << "\n";

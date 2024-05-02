@@ -22,7 +22,7 @@ std::ostream & fixToTwoLines( const char * fix, offset_t & pos, std::ostream & o
     {
         unsigned uwidth = 0, lwidth = 0;
         offset_t prev = pos;
-        raw_tag_t tag = nextRawTag( fix+pos, pos );
+        raw_tag_t tag = loadRawTag( fix+pos, pos );
 
         if( tag == 0 )
         {
@@ -30,15 +30,15 @@ std::ostream & fixToTwoLines( const char * fix, offset_t & pos, std::ostream & o
             return os;
         }
 
-        auto it = rawToTagName.find( tag );
+        auto it = RAW_TAG_TO_NAME.find( tag );
         const FieldEnumsBase * enums = nullptr;
-        if( it != rawToTagName.end() )
+        if( it != RAW_TAG_TO_NAME.end() )
         {
             uwidth += strlen( it->second );
             upperLine << style.tagNameStart << it->second << style.tagNameStop;
 
-            auto eit = rawToEnum.find( tag );
-            if( eit != rawToEnum.end() )
+            auto eit = RAW_TO_ENUM.find( tag );
+            if( eit != RAW_TO_ENUM.end() )
             {
                 enums = eit->second;
             }
@@ -100,7 +100,7 @@ std::ostream & fixToTwoLines( const char * fix, offset_t & pos, std::ostream & o
         lowerLine << ' ';
 
         ++pos;
-        if( tag == FieldCheckSum::RAW )
+        if( tag == FieldCheckSum::RAW_TAG )
         {
             break;
         }
@@ -111,51 +111,127 @@ std::ostream & fixToTwoLines( const char * fix, offset_t & pos, std::ostream & o
     return os;
 }
 
+std::ostream & fixToFlatJson( const char * fix, offset_t & pos, std::ostream & os, 
+                              const char * tagKey, const char * valueKey, const char * nameKey = nullptr, 
+                              const char * enumKey = nullptr, const char * typeKey = nullptr )
+{
+    os << '[';
+
+    while( fix[pos] )
+    {
+        offset_t prev = pos;
+        const raw_tag_t tag = loadRawTag( fix+pos, pos );
+
+        os << "{\"" << tagKey << "\":";
+        while( fix[prev] != '=' )
+        {
+            os << fix[prev++];
+        }
+        os << ",";
+        if( nameKey )
+        {
+            os << "\"" << nameKey << "\":\"";
+            auto it = RAW_TAG_TO_NAME.find( tag );
+            if( it != RAW_TAG_TO_NAME.end() )
+            {
+                os << it->second;
+            }
+            os << "\",";
+        }
+        if( typeKey )
+        {
+            os << "\"" << typeKey << "\":\"";
+            auto it = TAG_TO_FIELD_TYPE_NAME.find( raw_to_tag(tag) );
+            if( it != TAG_TO_FIELD_TYPE_NAME.end() )
+            {
+                os << it->second;
+            }
+            os << "\",";
+        }
+
+        raw_enum_t rawEnum = toRawEnum( fix + pos );
+        os << "\"" << valueKey << "\":\"";
+        while( fix[pos] and fix[pos] != FIXPP_SOH )
+        {
+            os << fix[pos++];
+        }
+        os << "\"";
+
+        if( enumKey )
+        {
+            auto it = RAW_TO_ENUM.find( tag );
+            if( it != RAW_TO_ENUM.end() )
+            {
+                os << ",\"" << enumKey << "\":\"";
+                const char * enumName = it->second->getEnumNameByRaw( rawEnum );
+                if( enumName )
+                {
+                    os << enumName;
+                }
+                else
+                {
+                    os << "UNKNOWN";
+                }
+                os << "\"";
+            }
+        }
+        os << '}';
+
+        ++pos;
+        if( tag == FieldCheckSum::RAW_TAG )
+        {
+            break;
+        }
+        os << ',';
+    }
+    os << ']';
+    return os;
+}
 
 const FixFormatStyle htmlRgbStyle =
 {
-    "<pre>",  //  messageBegin
-    "</pre>",  //  messageEnd
-    "  ",//  indent
-    " &#x2022;",//  groupFirstField;
-    " ", //  fieldBegin
-    "\n",//  fieldEnd
-    "<font color=\"#444444\">",  //  headerTagNameStart
-    "</font>",  //  headerTagNameStop
-    "<font color=\"black\"><b>",  //  tagNameStart
-    "</b></font>",  //  tagNameStop
-    "<font color=\"grey\">(", //  tagValueStart
-    ")</font>", //  tagValueStop
-    " = ", //  equal
-    "<font color=\"darkblue\">",  //  valueStart
-    "</font>",  //  valueStop
-    " <font color=\"darkgreen\">", //  enumStart
-    "</font>",  //  enumStop
-    "<font color=\"red\">",  //  unknownStart
-    "</font>"      //  unknownStop
+    .messageBegin =       "<pre>",
+    .messageEnd =         "</pre>",
+    .indent =             "  ",
+    .groupFirstField =    " &#x2022;",
+    .fieldBegin =         " ",
+    .fieldEnd =           "\n",
+    .headerTagNameStart = "<font color=\"#444444\">",
+    .headerTagNameStop =  "</font>",
+    .tagNameStart =       "<font color=\"black\"><b>",
+    .tagNameStop =        "</b></font>",
+    .tagValueStart =      "<font color=\"grey\">(",
+    .tagValueStop =       ")</font>",
+    .equal =              " = ",
+    .valueStart =         "<font color=\"darkblue\">",
+    .valueStop =          "</font>",
+    .enumStart =          " <font color=\"darkgreen\">",
+    .enumStop =           "</font>",
+    .unknownStart =       "<font color=\"red\">",
+    .unknownStop =        "</font>"
 };
 
 const FixFormatStyle htmlTableRgbStyle =
 {
-    "<pre><table>",  //  messageBegin
-    "</table></pre>",  //  messageEnd
-    "&nbsp;&nbsp;",//  indent
-    "&nbsp;&#x2022;",//  groupFirstField;
-    "<tr><td>", //  fieldBegin
-    "</td></tr>\n",//  fieldEnd
-    "<font color=\"#444444\">",  //  headerTagNameStart
-    "</font>",  //  headerTagNameStop
-    "<font color=\"black\"><b>",  //  tagNameStart
-    "</b></font>",  //  tagNameStop
-    "<font color=\"grey\">(", //  tagValueStart
-    ")</font>", //  tagValueStop
-    " </td><td> ", //  equal
-    "<font color=\"darkblue\">",  //  valueStart
-    "</font>",  //  valueStop
-    " <font color=\"darkgreen\">", //  enumStart
-    "</font>",  //  enumStop
-    "<font color=\"red\">",  //  unknownStart
-    "</font>"      //  unknownStop
+    .messageBegin       = "<pre><table>",
+    .messageEnd         = "</table></pre>",
+    .indent             = "&nbsp;&nbsp;",
+    .groupFirstField    = "&nbsp;&#x2022;",
+    .fieldBegin         = "<tr><td>",
+    .fieldEnd           = "</td></tr>\n",
+    .headerTagNameStart = "<font color=\"#444444\">",
+    .headerTagNameStop  = "</font>",
+    .tagNameStart       = "<font color=\"black\"><b>",
+    .tagNameStop        = "</b></font>",
+    .tagValueStart      = "<font color=\"grey\">(",
+    .tagValueStop       = ")</font>",
+    .equal              = " </td><td> ",
+    .valueStart         = "<font color=\"darkblue\">",
+    .valueStop          = "</font>",
+    .enumStart          = " <font color=\"darkgreen\">" ,
+    .enumStop           = "</font>",
+    .unknownStart       = "<font color=\"red\">",
+    .unknownStop        = "</font>"
 };
 
 int main( int args, const char ** argv )
@@ -202,6 +278,12 @@ int main( int args, const char ** argv )
     html << fixstr( FIX_BUFFER_LARGE_EXEC_REPORT, htmlTableRgbStyle ) << std::endl;
     html.close();
     html << fixstr( FIX_BUFFER_LARGE_EXEC_REPORT, ttyRgbRawStyle ) << std::endl;
+
+    pos = 0;
+    fixToFlatJson( FIX_BUFFER_EXEC_REPORT, pos, std::cout, "field", "value" ) << '\n' << std::endl;
+
+    pos = 0;
+    fixToFlatJson( FIX_BUFFER_EXEC_REPORT, pos, std::cout, "f", "v", "n", "e", "t" ) << '\n' << std::endl;
 
     return 0;
 }

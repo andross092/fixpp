@@ -24,16 +24,20 @@ const NAME##Enums::ItemType NAME##Enums::E( #E, V ); \
 #undef FIX_FIELD_BEGIN_STRING
 #define FIX_FIELD_BEGIN_STRING( STR )
 
-<com> -------------------------------------- enum items ----------------------------------------
+<com> ------------------------------- enum items and type names -------------------------------------
 
 #define FIX_FIELD_DECL( NAME, TAG, TYPE ) \
-template<> const FieldEnumBase * const * Field##NAME::enumItems = nullptr;
+template<> const FieldEnumBase * const * Field##NAME::enumItems = nullptr;\
+<nl>template<> FieldType Field##NAME::getType() { return FieldType::TYPE; }\
+<nl>template<> const std::string & Field##NAME::getTypeName() { static const std::string fixType{ #TYPE }; return fixType; }
 
 #define FIX_ENUM_BEGIN( NAME ) \
 <nl>const char * NAME##Enums::getFieldName() const { return Fix##NAME; }\
-<nl>const FieldEnumBase * NAME##Enums::getEnumByRaw( raw_enum_t raw ) const  { auto it = itemByRaw.find(raw); return it == itemByRaw.end() ? nullptr : it->second; }\
+<nl>const FieldEnumBase * NAME##Enums::findEnum( raw_enum_t raw ) { auto it = itemByRaw.find(raw); return it == itemByRaw.end() ? nullptr : it->second; }\
+<nl>const NAME##Enums::ValueType * NAME##Enums::findEnumValue( raw_enum_t raw ) { auto it = itemByRaw.find(raw); return it == itemByRaw.end() ? nullptr : & static_cast<const ItemType*>(it->second)->value; }\
+<nl>const FieldEnumBase * NAME##Enums::getEnumByRaw( raw_enum_t raw ) const { return findEnum( raw ); }\
 <nl>const FieldEnumMap & NAME##Enums::getEnumMapByRaw() const { return NAME##Enums::itemByRaw; }\
-<nl>const FieldEnumBase * const * const NAME##Enums::getEnums() const { return items; }\
+<nl>const FieldEnumBase ** NAME##Enums::getEnums() const { return items; }\
 <nl>const NAME##Enums NAME##Enums::instance;\
 <nl>const FieldEnumBase * NAME##Enums::items[] = {\
 
@@ -78,7 +82,8 @@ const FieldEnumMap NAME##Enums::itemByRaw = { \
 <pragma> GCC optimize("O0")
 
 #define FIX_ENUM_BEGIN( NAME ) <t1>Field##NAME::enumItems = NAME##Enums::items;\
-<n1>enumsByRaw.emplace( Field##NAME::RAW, & NAME##Enums::instance );
+<n1>enumsByRaw.emplace( Field##NAME::RAW_TAG, & NAME##Enums::instance );\
+<n1>enumsByTag.emplace( Field##NAME::TAG, & NAME##Enums::instance );
 
 #define FIX_ENUM_DECL( NAME, E, V ) remove-me
 
@@ -87,7 +92,9 @@ const FieldEnumMap NAME##Enums::itemByRaw = { \
 #define FIX_FIELD_DECL( NAME, TAG, TYPE ) \
 <n1>tagNameByRaw.emplace( tag_as_raw<TAG>(), Fix##NAME );\
 <n1>tagNameByValue.emplace( TAG, Fix##NAME );\
-<n1>tagByName.emplace( Fix##NAME, TAG );
+<n1>tagByName.emplace( Fix##NAME, TAG );\
+<n1>fieldTypeByValue.emplace( TAG, FieldType::TYPE );\
+<n1>fieldTypeNameByValue.emplace( TAG, #TYPE );
 
 <nl>
 int initStatics()

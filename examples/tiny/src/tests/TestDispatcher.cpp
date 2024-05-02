@@ -25,13 +25,13 @@ class MyProcessor: public ParserDispatcher
 
 int main( int args, const char ** argv )
 {
-    const char * buffer = allTreeExamples;
+    const char * buffer = allGoodExamples;
 
     std::size_t len = std::strlen( buffer );
     const char * cursor = buffer;
 
     MyProcessor mp;
-    while( cursor = mp.parseAndDipatch( cursor, len - ( cursor - buffer ) ) )
+    while( ( cursor = mp.parseAndDipatch( cursor, len - ( cursor - buffer ) ) ) != nullptr )
     {
     }
     

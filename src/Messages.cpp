@@ -32,9 +32,9 @@ void ParserDispatcher::unprocessedMessage( raw_enum_t msgType, MessageBase & msg
 {
 }
 
-std::set< raw_tag_t > headerFields =
+std::set< raw_tag_t > headerRawTags =
 {
-#include <DSTINCDIR/Header.cxx>
+#include <DSTINCDIR/HeaderRaw.cxx>
 };
 
 const FixFormatStyle defaultStyle =
@@ -207,14 +207,14 @@ const char * getEnumName( const char * fix, int valueOffset )
         --pos;
     }
 
-    const raw_tag_t tag = nextRawTag( fix+pos, pos );
+    const raw_tag_t tag = loadRawTag( fix+pos, pos );
     if( tag == 0 )
     {
         return nullptr;
     }
 
-    auto eit = rawToEnum.find( tag );
-    if( eit == rawToEnum.end() )
+    auto eit = RAW_TO_ENUM.find( tag );
+    if( eit == RAW_TO_ENUM.end() )
     {
         return nullptr;
     }
@@ -231,7 +231,7 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
     while( fix[pos] )
     {
         offset_t prev = pos;
-        const raw_tag_t tag = nextRawTag( fix+pos, pos );
+        const raw_tag_t tag = loadRawTag( fix+pos, pos );
 
         if( tag == 0 )
         {
@@ -241,11 +241,11 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
 
         os << style.fieldBegin;
 
-        auto it = rawToTagName.find( tag );
+        auto it = RAW_TAG_TO_NAME.find( tag );
         const FieldEnumsBase * enums = nullptr;
-        if( it != rawToTagName.end() )
+        if( it != RAW_TAG_TO_NAME.end() )
         {
-            if( headerFields.find( tag ) != headerFields.end() )
+            if( headerRawTags.find( tag ) != headerRawTags.end() )
             {
                 if( style.headerTagNameStart )
                 {
@@ -273,8 +273,8 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
                 }
             }
 
-            auto eit = rawToEnum.find( tag );
-            if( eit != rawToEnum.end() )
+            auto eit = RAW_TO_ENUM.find( tag );
+            if( eit != RAW_TO_ENUM.end() )
             {
                 enums = eit->second;
             }
@@ -315,7 +315,7 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
                 os << style.unknownStart << " UNKNOWN" << style.unknownStop;
             }
 
-            if( tag == FieldMsgType::RAW and indentator == autoIndentFields )
+            if( tag == FieldMsgType::RAW_TAG and indentator == autoIndentFields )
             {
                 indentator = getTagDepthMethodByRawMsgType( rawEnum );
             }
@@ -326,7 +326,7 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
         os.flush();
 
         ++pos;
-        if( tag == FieldCheckSum::RAW )
+        if( tag == FieldCheckSum::RAW_TAG )
         {
             break;
         }
