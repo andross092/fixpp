@@ -570,8 +570,6 @@ struct ReusableMessageBuilder: FixBufferStream
         begin = end = &buffer[0] + headerTemplateCapacity;
     }
 
-    ReusableMessageBuilder( const ReusableMessageBuilder & ) = delete;
-
     // To be called just before sending.
     // Header is supposed to be updated by this time.
     const char * setSeqnumAndUpdateHeaderAndChecksum( unsigned seqnum )
