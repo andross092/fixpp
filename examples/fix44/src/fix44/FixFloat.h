@@ -398,12 +398,12 @@ inline fix44::Float operator "" _ff( long double q )
 #else
 #define FIXPP_OP_TYPE unsigned long
 #endif
-
+#if 0
 inline fix44::Float operator "" _ff( const char * ptr, FIXPP_OP_TYPE )
 {
     return fix44::Float( ptr );
 }
-
+#endif
 } // namespace fix44
 
 
