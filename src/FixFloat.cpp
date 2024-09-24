@@ -55,7 +55,7 @@ std::string Float::toString( bool withDetails ) const
         {
             result.append( "Div0" );
         }
-        if( isFlagSet<Flag::INFINITE>() )
+        if( isFlagSet<Flag::INFINITE_>() )
         {
             result.append( "Inf" );
         }
@@ -221,7 +221,7 @@ Float Float::div( const Float & other ) const
             return Float( Flag::NOTANUMBER );
         }
         Float res( Flag::DIVBYZERO );
-        res.setFlag<Flag::INFINITE>();
+        res.setFlag<Flag::INFINITE_>();
         return res;
     }
 

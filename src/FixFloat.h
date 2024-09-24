@@ -44,8 +44,8 @@ class Float
             CLEAR        = 0,
             OVER_FLOW     = 1,
             DIVBYZERO    = OVER_FLOW   << 1,
-            INFINITE     = DIVBYZERO  << 1,
-            NOTANUMBER   = INFINITE   << 1,
+            INFINITE_     = DIVBYZERO  << 1,
+            NOTANUMBER   = INFINITE_   << 1,
             NOTSUPPORTED = NOTANUMBER << 1
         };
 
@@ -282,7 +282,7 @@ class Float
 
         bool isInfinite() const
         {
-            return isFlagSet<Flag::INFINITE>();
+            return isFlagSet<Flag::INFINITE_>();
         }
 
         bool isNotANumber() const
