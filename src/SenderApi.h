@@ -6,13 +6,34 @@ __COPYRIGHT__
 #include <DSTINCDIR/Messages.h>
 #include <cstring>
 #include <chrono>
+#include <cstdint>
 
 #ifndef likely
-#define likely(x)      __builtin_expect(!!(x), 1)
-#endif
+#define likely(expr)                                                           \
+    (([](bool value) {                                                         \
+        switch (value) {                                                       \
+        [[likely]] case true:                                                  \
+            return true;                                                       \
+        [[unlikely]] case false:                                               \
+            return false;                                                      \
+        }                                                                      \
+    })(expr))
+ #endif
 
 #ifndef unlikely
-#define unlikely(x)    __builtin_expect(!!(x), 0)
+#define unlikely(expr)                                                         \
+    (([](bool value) {                                                         \
+        switch (value) {                                                       \
+        [[unlikely]] case true:                                                \
+            return true;                                                       \
+        [[likely]] case false:                                                 \
+            return false;                                                      \
+        }                                                                      \
+    })(expr)) 
+#endif
+
+#ifndef ssize_t
+#define ssize_t std::ptrdiff_t
 #endif
 
 namespace DSTNAMESPACE

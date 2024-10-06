@@ -5,6 +5,7 @@ __COPYRIGHT__
 
 #include <DSTINCDIR/FixTypes.h>
 #include <cmath>
+#include <ostream>
 
 #ifdef __SIZEOF_INT128__
 #ifndef FIXPP_FLOAT_PRECISE_DIVISION_SUPPORTED
