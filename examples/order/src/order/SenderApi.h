@@ -205,6 +205,11 @@ struct FixBufferStream
         return pushValue( src.c_str(), src.size() );
     }
 
+    FixBufferStream & pushValue( const std::string_view & src )
+    {
+        return pushValue( src.data(), src.size() );
+    }
+
     FixBufferStream & pushValue( const sohstr & src )
     {
         for( const char * ptr = src.ptr; *ptr != FIXPP_SOH and *ptr; )
@@ -357,6 +362,11 @@ struct HeaderTemplate: FixBufferStream
     // Returns countable body length [I 35=.....34=]
     unsigned finalize()
     {
+        if( *( end - FieldMsgSeqNum::INSERTABLE_TAG_WIDTH ) != FIXPP_SOH or
+            parseTag( end - FieldMsgSeqNum::TAG_WIDTH - 1 ) != FieldMsgSeqNum::TAG )
+        {
+            pushTag<FieldMsgSeqNum>();
+        }
         chksum = computeChecksum( begin, end );
         return countableLength = ( end - begin ) - BODY_LENGTH_OFFSET;
     }
@@ -380,9 +390,14 @@ struct TimestampKeeper
     constexpr static unsigned DATE_TIME_NANOS_LENGTH   = 27;
     constexpr static const char * const PLACE_HOLDER   = "11112233-44:55:66.777888999";
 
-    inline unsigned length() const
+    static unsigned precisionToLength( Precision precision )
     {
-        return DATE_TIME_SECONDS_LENGTH + ( secFraction != Precision::SECONDS ? 1 : 0 ) + (unsigned)secFraction;
+        return DATE_TIME_SECONDS_LENGTH + ( precision != Precision::SECONDS ? 1 : 0 ) + (unsigned)precision;
+    }
+
+    unsigned length() const
+    {
+        return precisionToLength( secFraction );
     }
 
     explicit TimestampKeeper( char * buffer = nullptr, Precision secPrecision = Precision::SECONDS )
@@ -395,26 +410,31 @@ struct TimestampKeeper
     {
     }
 
-    unsigned getWidth() const
+    void reset()
     {
-        return DATE_TIME_SECONDS_LENGTH + 1 + (unsigned)secFraction;
+        startOfDay   = 0;
+        endOfDay     = 0;
+        begin        = nullptr;
+        lastSecond   = 0;
+        lastFraction = 0;
+        secFraction  = Precision::SECONDS;
     }
 
     unsigned fill( char * buffer, Precision secPrecision, const TimePoint & tp = ClockType::now() )
     {
         if( begin != buffer or secFraction != secPrecision )
         {
-            begin = buffer;
-            secFraction = secPrecision;
-            startOfDay = 0;
-            endOfDay = 0;
-            lastSecond = 0;
+            begin        = buffer;
+            secFraction  = secPrecision;
+            startOfDay   = 0;
+            endOfDay     = 0;
+            lastSecond   = 0;
             lastFraction = 0;
         }
         if( buffer )
         {
             update( tp );
-            return getWidth();
+            return length();
         }
         return 0;
     }
@@ -425,10 +445,10 @@ struct TimestampKeeper
         secFraction = secPrecision;
         if( buffer )
         {
-            memcpy( buffer, PLACE_HOLDER, getWidth() );
+            memcpy( buffer, PLACE_HOLDER, length() );
             update();
         }
-        return getWidth();
+        return length();
     }
 
     char * update( const TimePoint & tp = ClockType::now() )
@@ -525,6 +545,11 @@ inline unsigned valueMaxLength( const std::string & v )
     return v.size();
 }
 
+inline unsigned valueMaxLength( const std::string_view & v )
+{
+    return v.size();
+}
+
 inline unsigned valueMaxLength( const TimestampKeeper & v )
 {
     return v.length();
@@ -564,7 +589,7 @@ struct ReusableMessageBuilder: FixBufferStream
     ReusableMessageBuilder( const std::string & messageType, unsigned maxBodyLength, unsigned headerTemplateCapacity = 128 )
     : FixBufferStream    ( nullptr )
     , msgType            ( messageType )
-    , buffer             ( maxBodyLength + 1, (char)0 )
+    , buffer             ( headerTemplateCapacity + maxBodyLength + 1, (char)0 )
     , start              ( nullptr )
     , lastSeqnumWidth    ( 0 )
     , minSeqnumWidth     ( 1 )
@@ -574,9 +599,20 @@ struct ReusableMessageBuilder: FixBufferStream
     , header             ( headerTemplateCapacity, messageType )
     {
         begin = end = &buffer[0] + headerTemplateCapacity;
+        for( unsigned i = 0; i < NO_TIMES; ++i )
+        {
+            userTime[i].reset();
+        }
     }
 
     ReusableMessageBuilder( const ReusableMessageBuilder & ) = delete;
+
+    void setupSendingTime( ClockPrecision precision )
+    {
+        append<FieldSendingTime>( TimestampKeeper::PLACE_HOLDER, TimestampKeeper::precisionToLength( precision ) );
+        sendingTime.setup( end - TimestampKeeper::precisionToLength( precision ), precision );
+        sendingTime.update();
+    }
 
     // To be called just before sending.
     // Header is supposed to be updated by this time.
@@ -629,9 +665,24 @@ struct ReusableMessageBuilder: FixBufferStream
         if( endOffset + (ssize_t)valueLength >= (ssize_t)buffer.size() )
         {
             auto beginOffset = begin - &buffer[0];
+            ssize_t userTimeOffset[NO_TIMES] = {};
+            for( unsigned i = 0; i < NO_TIMES; ++i )
+            {
+                if( userTime[i].begin )
+                {
+                    userTimeOffset[i] = userTime[i].begin - &buffer[0];
+                }
+            }
             buffer.resize( ( 1 + ( endOffset + valueLength ) / bufferGrowChunk ) * bufferGrowChunk );
             begin = &buffer[0] + beginOffset;
             end   = &buffer[0] + endOffset;
+            for( unsigned i = 0; i < 5; ++i )
+            {
+                if( userTime[i].begin )
+                {
+                    userTime[i].begin = &buffer[0] + userTimeOffset[i];
+                }
+            }
         }
     }
 
@@ -663,6 +714,14 @@ struct ReusableMessageBuilder: FixBufferStream
     }
 
     template< typename FIELD >
+    FixBufferStream & appendSafely( TimestampKeeper & v, const TimePoint & tp = ClockType::now() )
+    {
+        resizeIfNecessary( TimestampKeeper::DATE_TIME_NANOS_LENGTH );
+        end = insert<FIELD>(end);
+        return pushValue( v, tp );
+    }
+
+    template< typename FIELD >
     FixBufferStream & appendSafely( const FieldEnum< typename FIELD::ValueType > & item  )
     {
         resizeIfNecessary( valueMaxLength( item.value ) );
@@ -678,11 +737,14 @@ struct ReusableMessageBuilder: FixBufferStream
     unsigned                      minBodyLengthWidth;
     unsigned                      bufferGrowChunk;
     HeaderTemplate                header;
+
+    static constexpr unsigned     NO_TIMES = 5;
+    union
+    {
     TimestampKeeper               sendingTime;
-    TimestampKeeper               userTime1; // user defined timestamps
-    TimestampKeeper               userTime2;
-    TimestampKeeper               userTime3;
-    TimestampKeeper               userTime4;
+    TimestampKeeper               userTime[NO_TIMES];
+    };
+
 };
 
 }
