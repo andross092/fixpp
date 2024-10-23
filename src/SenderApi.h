@@ -8,6 +8,7 @@ __COPYRIGHT__
 #include <chrono>
 #include <cstdint>
 
+
 #ifndef likely
 #define likely(expr)                                                           \
     (([](bool value) {                                                         \
@@ -16,10 +17,10 @@ __COPYRIGHT__
             return true;                                                       \
         [[unlikely]] case false:                                               \
             return false;                                                      \
-        }                                                                      \  
+        }                                                                      \
         return value;                                                          \
-    })(expr)) 
- #endif
+    })(expr))
+#endif
 
 #ifndef unlikely
 #define unlikely(expr)                                                         \
@@ -29,9 +30,9 @@ __COPYRIGHT__
             return true;                                                       \
         [[likely]] case false:                                                 \
             return false;                                                      \
-        }                                                                      \  
+        }                                                                      \
         return value;                                                          \
-    })(expr)) 
+    })(expr))
 #endif
 
 #ifndef ssize_t
@@ -629,6 +630,7 @@ struct ReusableMessageBuilder: FixBufferStream
     }
 
     ReusableMessageBuilder( const ReusableMessageBuilder & ) = delete;
+    ReusableMessageBuilder( ReusableMessageBuilder && ) = default;
 
     void setupSendingTime( ClockPrecision precision )
     {
