@@ -79,9 +79,10 @@ const FieldEnumMap NAME##Enums::itemByRaw = { \
 #undef FIX_ENUM_END
 
 <com> -------------------------------------- init ----------------------------------------
+#ifdef __GNUC__
 <pragma> GCC push_options
 <pragma> GCC optimize("O0")
-
+#endif
 #define FIX_ENUM_BEGIN( NAME ) <t1>Field##NAME::enumItems = NAME##Enums::items;\
 <n1>enumsByRaw.emplace( Field##NAME::RAW_TAG, & NAME##Enums::instance );\
 <n1>enumsByTag.emplace( Field##NAME::TAG, & NAME##Enums::instance );
@@ -105,8 +106,9 @@ int initStatics()
 }
 
 volatile int initIndicator = initStatics();
+#ifdef __GNUC__
 <pragma> GCC pop_options
-
+#endif
 #undef FIX_ENUM_BEGIN
 #undef FIX_ENUM_DECL
 #undef FIX_ENUM_END

@@ -16,8 +16,9 @@ __COPYRIGHT__
             return true;                                                       \
         [[unlikely]] case false:                                               \
             return false;                                                      \
-        }                                                                      \
-    })(expr))
+        }                                                                      \  
+        return value;                                                          \
+    })(expr)) 
  #endif
 
 #ifndef unlikely
@@ -28,7 +29,8 @@ __COPYRIGHT__
             return true;                                                       \
         [[likely]] case false:                                                 \
             return false;                                                      \
-        }                                                                      \
+        }                                                                      \  
+        return value;                                                          \
     })(expr)) 
 #endif
 
