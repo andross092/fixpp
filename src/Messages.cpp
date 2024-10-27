@@ -337,9 +337,10 @@ std::ostream & fixToHuman( const char * fix, offset_t & pos, std::ostream & os, 
 }
 
 } // namespace DSTNAMESPACE
-
+#if 0
 // gdb helper
 extern "C" const char * fixppGetEnumName( const char * fix, int valueOffset )
 {
     return DSTNAMESPACE::getEnumName( fix, valueOffset );
 }
+#endif
