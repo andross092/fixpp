@@ -2,6 +2,90 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "TestMessageBuilders",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/debug/tests/TestMessageBuilders.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug:${env:LD_LIBRARY_PATH}" }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "TestFloat",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/debug/tests/TestFloat.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug:${env:LD_LIBRARY_PATH}" }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "TestFormats",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/debug/tests/TestFormats.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug:${env:LD_LIBRARY_PATH}" }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "TestSafeSender",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/debug/tests/TestSafeSender.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug:${env:LD_LIBRARY_PATH}" }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "TestSender",
             "type": "cppdbg",
             "request": "launch",
@@ -10,7 +94,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
-                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug" }
+                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug:${env:LD_LIBRARY_PATH}" }
             ],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -31,7 +115,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
-                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug" }
+                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug:${env:LD_LIBRARY_PATH}" }
             ],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -73,7 +157,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
-                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug" }
+                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/build/lib/debug:${env:LD_LIBRARY_PATH}" }
             ],
             "externalConsole": false,
             "MIMode": "gdb",

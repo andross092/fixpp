@@ -1,47 +1,49 @@
+__COPYRIGHT__
 #pragma once
 #ifndef DSTHEADERGUARD_MESSAGES_H
 #define DSTHEADERGUARD_MESSAGES_H
 
 #include <DSTINCDIR/Fields.h>
-
+#include <DSTINCDIR/Groups.h>
 #include <vector>
+#include <string_view>
 
 namespace DSTNAMESPACE
 {
 
 GetDepthMethod getTagDepthMethodByRawMsgType( raw_enum_t rawMsgType );
 
-#include <DSTINCDIR/Groups.hxx>
 
 #include <DSTINCDIR/Messages.hxx>
 
 struct FixFormatStyle
 {
-    const char * messageBegin   ;
-    const char * messageEnd     ;
-    const char * indent         ;
-    const char * groupFirstField;
-    const char * fieldBegin     ;
-    const char * fieldEnd       ;
+    const char * messageBegin      ;
+    const char * messageEnd        ;
+    const char * indent            ;
+    const char * groupFirstField   ;
+    const char * fieldBegin        ;
+    const char * fieldEnd          ;
     const char * headerTagNameStart;
     const char * headerTagNameStop ;
-    const char * tagNameStart   ;
-    const char * tagNameStop    ;
-    const char * tagValueStart  ;
-    const char * tagValueStop   ;
-    const char * equal          ;
-    const char * valueStart     ;
-    const char * valueStop      ;
-    const char * enumStart      ;
-    const char * enumStop       ;
-    const char * unknownStart   ;
-    const char * unknownStop    ;
+    const char * tagNameStart      ;
+    const char * tagNameStop       ;
+    const char * tagValueStart     ;
+    const char * tagValueStop      ;
+    const char * equal             ;
+    const char * valueStart        ;
+    const char * valueStop         ;
+    const char * enumStart         ;
+    const char * enumStop          ;
+    const char * unknownStart      ;
+    const char * unknownStop       ;
 };
 
 extern const FixFormatStyle defaultStyle;
 extern const FixFormatStyle defaultVerticalStyle;
 extern const FixFormatStyle ttyStyle;
 extern const FixFormatStyle ttyRgbStyle;
+extern const FixFormatStyle ttyRgbRawStyle;
 extern const FixFormatStyle ttyRgbSingleLineStyle;
 
 const GetDepthMethod autoIndentFields = (GetDepthMethod)(-1);
@@ -52,6 +54,7 @@ unsigned computeChecksum( const char * begin, const char * end );
 
 unsigned parseMessageLength( const char * fix, unsigned & msgTypePos );
 
+// To be used with ostream << operator.
 struct fixstr
 {
     explicit fixstr( const char * fix, const FixFormatStyle & fstyle = defaultStyle, GetDepthMethod ind = autoIndentFields ): ptr(fix), style(fstyle), indentator{ind} {}

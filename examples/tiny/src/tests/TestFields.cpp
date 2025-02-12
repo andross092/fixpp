@@ -1,11 +1,12 @@
 #include <tiny/Messages.h>
 #include "FixSamples.h"
-#include "Helper.h"
+#include <utests/TrivialHelper.h>
 #include <cstring>
 #include <sstream>
 #include <fstream>
 #include <ctime>
 #include <iomanip>
+#include <set>
 
 using namespace tiny;
 using namespace std::string_literals;
@@ -15,23 +16,63 @@ using namespace std::string_literals;
 #define W3 std::setw(3)  <<  std::setfill('0')
 #define W2 std::setw(2)  <<  std::setfill('0')
 
-template< typename T >
-bool operator < ( const tiny::Quantity & qty, const T & value )
-{
-    return (T)qty < value;
-}
-
-template<>
-bool operator < <tiny::Quantity>( const tiny::Quantity & left, const tiny::Quantity & right )
-{
-    return  left.isInteger and right.isInteger ? left.value.integer < right.value.integer : (double)left < (double)right;
-}
-
 int main( int args, const char ** argv )
 {
+    // uncomment to test too big tags
+    // [[maybe_unused]] raw_tag_t bigTag = tag_as_raw<123'000>();
+
+    static_assert( std::is_same_v< Float, field_traits<FieldType::AMT>::native_type > );
+
+    raw_tag_t raw = tag_as_raw<1>();
+    tag_t tag = raw_to_tag( raw );
+    CHECK( tag 1, tag, == 1 );
+
+    raw = tag_as_raw<12>();
+    tag = raw_to_tag( raw );
+    CHECK( tag 12, tag, == 12 );
+
+    raw = tag_as_raw<123>();
+    tag = raw_to_tag( raw );
+    CHECK( tag 123, tag, == 123 );
+
+    raw = tag_as_raw<1234>();
+    tag = raw_to_tag( raw );
+    CHECK( tag 1234, tag, == 1234 );
+
+    raw = tag_as_raw<12345>();
+    tag = raw_to_tag( raw );
+    CHECK( tag 12345, tag, == 12345 );
+
+    offset_t pos = 0;
+    raw = tiny::loadRawTag( "1=", pos );
+    CHECK( load tag 1, raw, == tag_as_raw<1>() );
+
+    pos = 0;
+    raw = tiny::loadRawTag( "12345=", pos );
+    CHECK( load tag 12345, raw, == tag_as_raw<12345>() );
+
+    tag = tiny::parseTag( "12345=" );
+    CHECK( parse tag 12345, tag, == 12345 );
+
+    tag = tiny::parseTag( "=" );
+    CHECK( parse empty tag, tag, == 0 );
+
+    CHECK( is good tag 0,      tiny::isGoodTag( "0=" ),      == false );
+    CHECK( is good tag 02,     tiny::isGoodTag( "02=" ),     == false );
+    CHECK( is good tag 123456, tiny::isGoodTag( "123456=" ), == false );
+    CHECK( is good tag 1 2,    tiny::isGoodTag( "1 2=" ),    == false );
+    CHECK( is good tag NaN,    tiny::isGoodTag( "NAN=" ),    == false );
+    CHECK( is good tag empty,  tiny::isGoodTag( "=" ),       == false );
+    CHECK( is good tag SOH,    tiny::isGoodTag( "\1=" ),     == false );
+    CHECK( is good tag 1,      tiny::isGoodTag( "1=" ),      == true );
+    CHECK( is good tag 12345,  tiny::isGoodTag( "12345=" ),  == true );
+
+    tag = tiny::parseTag( "A=" ); // 17=
+    CHECK( parse tag A, tag, == 'A' - '0' );
+
     const char * fixBuffer = EXAMPLE_MARKETDATA_FULL_REFRESH;
     tiny::MessageHeader header;
-    offset_t pos = header.scan( fixBuffer, strlen( fixBuffer ) );
+    pos = header.scan( fixBuffer, strlen( fixBuffer ) );
     tiny::MessageMarketDataSnapshotFullRefresh mdsfr;
     pos = mdsfr.scan( fixBuffer + pos, strlen( fixBuffer ) - pos );
 
@@ -71,7 +112,6 @@ int main( int args, const char ** argv )
     const char *timeptr = parseYYYYMMDD( header.ptrToSendingTime(), yyyy, mm, dd ) + 1;
     unsigned short hour, minute, second;
     parseTime( timeptr, hour, minute, second, nanos );
-
     }
 
     {
@@ -195,11 +235,11 @@ int main( int args, const char ** argv )
     CHECK( 12:34:56.00000003, result.str(), == timeptr )
 
     auto noMdEntries = mdsfr.getNoMDEntries();
-    for( auto i = 0; i < noMdEntries; ++i )
+    for( unsigned i = 0; i < noMdEntries; ++i )
     {
         const tiny::GroupMDEntries & mdentry = mdsfr.getGroupMDEntries(i);
-        double price = mdentry.getMDEntryPx();
-        unsigned qty = mdentry.getMDEntrySize();
+        Float price = mdentry.getMDEntryPx();
+        Float qty = mdentry.getMDEntrySize();
         std::cout << "MDEntry: " << i << " price: " << price << " quantity: " << qty << std::endl;
     }
 
@@ -227,21 +267,33 @@ int main( int args, const char ** argv )
     d = parseDouble( "-1.345" I );
     CHECK( double -1.345, d, == -1.345 );
 
-    Quantity qty = parseQuantity( "0" I );
-    CHECK( qty 0 is int, qty.isInteger, == true );
-    CHECK( qty 0, qty.value.integer, == 0 );
+    Quantity qty( "0" I );
+    CHECK( qty 0 is int, qty.isInteger(), == true );
+    CHECK( qty 0, qty.asInt(), == 0 );
+    CHECK( qty < 0, qty < 0, == false );
+    CHECK( qty > 0, qty > 0, == false );
+    CHECK( qty < 1, qty < 1, == true );
 
-    qty = parseQuantity( "0.0" I );
-    CHECK( qty 0.0 is int, qty.isInteger, == false );
-    CHECK( qty 0.0, qty.value.real, == 0.0 );
+    qty.parse( "0.0" I );
+    CHECK( qty 0.0 is int, qty.isInteger(), == false );
+    CHECK( qty 0.0, qty.asDouble(), == 0.0 );
 
-    qty = parseQuantity( "10.023" I );
-    CHECK( qty 10.023 is int, qty.isInteger, == false );
-    CHECK( qty 10.023, qty.value.real, == 10.023 );
+    qty.parse( "10.023" I );
+    CHECK( qty 10.023 is int, qty.isInteger(), == false );
+    CHECK( qty 10.023, qty.asDouble(), == 10.023 );
 
-    CHECK( 10 * (int)10.023, 10 * (int)qty, == 100 );
+    qty = 1.2345;
+    CHECK( qty 1.2345 is int, qty.isInteger(), == false );
+    CHECK( qty 1.2345 get double, qty.asDouble(), == 1.2345 );
+    CHECK( qty 1.2345 get int, qty.asInt(), == 1 );
 
-    bool res = qty < 20;
-    // CHECK( 10.023 less 20, std::to_string(qty), res );
+    std::set<Quantity> qtySet;
+    qtySet.insert(   0 );
+    qtySet.insert( 0.0 );
+    CHECK( qty set size 1, qtySet.size(), == 1 );
+    qtySet.insert( 1.0 );
+    qtySet.insert(   1 );
+    CHECK( qty set size 2, qtySet.size(), == 2 );
+
     return 0;
 }

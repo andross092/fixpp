@@ -34,17 +34,22 @@ struct NAME##Enums final: FieldEnumsBase {\
 <n1>    static const FieldEnumBase * items[];\
 <n1>    static const FieldEnumMap itemByRaw;\
 <n1>    static const NAME##Enums instance;\
+<n1>    static const FieldEnumBase * findEnum( raw_enum_t raw );\
+<n1>    static const ValueType * findEnumValue( raw_enum_t raw );\
 <n1>    virtual const char * getFieldName() const override;\
 <n1>    virtual const FieldEnumBase * getEnumByRaw( raw_enum_t raw ) const override;\
 <n1>    virtual const FieldEnumMap & getEnumMapByRaw() const override;\
-<n1>    virtual const FieldEnumBase * const * const getEnums() const override;
+<n1>    virtual const FieldEnumBase ** getEnums() const override;
 
 
 #define FIX_ENUM_DECL( NAME, E, V ) \
-<t1> static const ItemType E;
+<t1> static const ItemType E;\
+<n1> static constexpr ValueType ITEM_##E = V;
 
 #define FIX_ENUM_END \
-};
+<t1> static const ItemType BAD_ENUM;\
+<n1> static constexpr ValueType ITEM_BAD_ENUM = BadEnum<ValueType>::value;\
+<nl>};
 
 #include <Fields.def>
 

@@ -11,9 +11,14 @@ class Message##NAME: public MessageBase\
 <n1>    static const char * getMessageName();\
 <n1>    static const std::string & getMessageType();\
 <n1>    offset_t scan( const char * fix, unsigned len );\
+<n1>    offset_t scanSafely( const char * fix, unsigned len );\
 <n1>    offset_t skip( const char * fix, unsigned len ) const;\
 <n1>    void reset();\
 <n1>    const char * getFieldValue( tag_t tag ) const;\
+<n1>    bool isFieldSet( tag_t tag ) const;\
+<n1>    const char * findBadField() const;\
+<n1>    const char * findBadGroup( unsigned & noExpected, unsigned & noReceived ) const;\
+<n1>    const char * findBadEnum() const;\
 <n1>    static FieldDepth getFieldDepth( raw_tag_t tag );\
 <n1>    static const std::vector<tag_t> & getKnownFields();\
 <n1>    private: static GetDepthMethod groupGetDepthMethods[];\
@@ -33,8 +38,8 @@ class Message##NAME: public MessageBase\
 #undef FIX_MSG_FIELD
 #undef FIX_MSG_GROUP
 
-#define FIX_MSG_FIELD(NAME) 
-#define FIX_MSG_GROUP(NAME) 
+#define FIX_MSG_FIELD(NAME)
+#define FIX_MSG_GROUP(NAME)
 #define FIX_MSG_END
 
 <nl>
@@ -58,7 +63,7 @@ class ParserDispatcher
 
      inline MessageHeader & getCurrentHeader() { return _msgHeader; }
 
-<t2> <com> dispatching 
+<t2> <com> dispatching
  <com> onHeader will never be called
 #define FIX_MSG_BEGIN(NAME,TYPE) \
  <t2> virtual void onMessage( Message##NAME & msg );

@@ -60,7 +60,6 @@ int main( int args, const char ** argv )
     ForexNewOrderSingle order;
     order.header.append<FieldSenderCompID>("ASENDER");
     order.header.append<FieldTargetCompID>("ATARGET");
-    order.header.pushTag<FieldMsgSeqNum>();
     order.header.finalize();
 
     //auto constexpr tsLen  = TimestampKeeper::DATE_TIME_SECONDS_LENGTH;
@@ -132,7 +131,7 @@ int main( int args, const char ** argv )
         std::cout << fixstr( order.start, ttyRgbStyle ) << std::endl;
     }
 
-    for( int i = 0; i < m.getMaxCaptures(); ++i )
+    for( unsigned i = 0; i < m.getMaxCaptures(); ++i )
     {
         const OrderFields & of = orders[ i % 8 ];
         m.startCapture();
