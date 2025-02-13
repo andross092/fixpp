@@ -82,7 +82,6 @@ const FixFormatStyle defaultVerticalStyle =
     .unknownStart       = "",
     .unknownStop        = ""
 };
-
 const FixFormatStyle ttyStyle =
 {
     .messageBegin       = "",
@@ -93,8 +92,8 @@ const FixFormatStyle ttyStyle =
     .fieldEnd           = "\n",
     .headerTagNameStart = "",
     .headerTagNameStop  = "",
-    .tagNameStart       = "\e[1m",
-    .tagNameStop        = "\e[0m",
+	.tagNameStart       = "\x1B[1m",
+	.tagNameStop        = "\x1B[0m",
     .tagValueStart      = "(",
     .tagValueStop       = ")",
     .equal              = "=",
@@ -102,8 +101,8 @@ const FixFormatStyle ttyStyle =
     .valueStop          = "",
     .enumStart          = "<",
     .enumStop           = ">",
-    .unknownStart       = "\e[31;1m",
-    .unknownStop        = "\e[0m"
+	.unknownStart       = "\x1B[31;1m",
+	.unknownStop        = "\x1B[0m"
 };
 
 const FixFormatStyle ttyRgbStyle =
@@ -114,19 +113,19 @@ const FixFormatStyle ttyRgbStyle =
     .groupFirstField    = " \u2022",
     .fieldBegin         = " ",
     .fieldEnd           = "\n",
-    .headerTagNameStart = "\e[33m",
-    .headerTagNameStop  = "\e[0m",
-    .tagNameStart       = "\e[33;1m",
-    .tagNameStop        = "\e[0m",
-    .tagValueStart      = "(\e[37;1m",
-    .tagValueStop       = "\e[0m)",
+	.headerTagNameStart = "\x1B[33m",
+	.headerTagNameStop  = "\x1B[0m",
+	.tagNameStart       = "\x1B[33;1m",
+	.tagNameStop        = "\x1B[0m",
+	.tagValueStart      = "(\x1B[37;1m",
+	.tagValueStop       = "\x1B[0m)",
     .equal              = " = ",
-    .valueStart         = "\e[34;1m",
-    .valueStop          = "\e[0m",
-    .enumStart          = " \e[32m",
-    .enumStop           = "\e[0m",
-    .unknownStart       = "\e[31;1m",
-    .unknownStop        = "\e[0m"
+	.valueStart         = "\x1B[34;1m",
+	.valueStop          = "\x1B[0m",
+	.enumStart          = " \x1B[32m",
+	.enumStop           = "\x1B[0m",
+	.unknownStart       = "\x1B[31;1m",
+	.unknownStop        = "\x1B[0m"
 };
 
 const FixFormatStyle ttyRgbSingleLineStyle =
@@ -137,19 +136,19 @@ const FixFormatStyle ttyRgbSingleLineStyle =
     .groupFirstField    = "",
     .fieldBegin         = "",
     .fieldEnd           = "  ",
-    .headerTagNameStart = "\e[33m",
-    .headerTagNameStop  = "\e[0m",
-    .tagNameStart       = "\e[33;1m",
-    .tagNameStop        = "\e[0m",
-    .tagValueStart      = "<\e[37;1m",
-    .tagValueStop       = "\e[0m>",
+	.headerTagNameStart = "\x1B[33m",
+	.headerTagNameStop  = "\x1B[0m",
+	.tagNameStart       = "\x1B[33;1m",
+	.tagNameStop        = "\x1B[0m",
+	.tagValueStart      = "<\x1B[37;1m",
+	.tagValueStop       = "\x1B[0m>",
     .equal              = "=",
-    .valueStart         = "\e[34;1m",
-    .valueStop          = "\e[0m",
-    .enumStart          = "/\e[32m",
-    .enumStop           = "\e[0m",
-    .unknownStart       = "\e[31;1m",
-    .unknownStop        = "\e[0m"
+	.valueStart         = "\x1B[34;1m",
+	.valueStop          = "\x1B[0m",
+	.enumStart          = "/\x1B[32m",
+	.enumStop           = "\x1B[0m",
+	.unknownStart       = "\x1B[31;1m",
+	.unknownStop        = "\x1B[0m"
 };
 
 // no tag names
@@ -162,18 +161,18 @@ const FixFormatStyle ttyRgbRawStyle =
     .fieldBegin         = "",
     .fieldEnd           = " ",
     .headerTagNameStart = nullptr,
-    .headerTagNameStop  = "\e[0m",
+	.headerTagNameStop  = "\x1B[0m",
     .tagNameStart       = nullptr,
-    .tagNameStop        = "\e[0m",
-    .tagValueStart      = "\e[93;1m",
-    .tagValueStop       = "\e[0m",
+	.tagNameStop        = "\x1B[0m",
+	.tagValueStart      = "\x1B[93;1m",
+	.tagValueStop       = "\x1B[0m",
     .equal              = "=",
-    .valueStart         = "\e[37;1m",
-    .valueStop          = "\e[0m",
-    .enumStart          = "/\e[92m",
-    .enumStop           = "\e[0m",
-    .unknownStart       = "\e[31;1m",
-    .unknownStop        = "\e[0m"
+	.valueStart         = "\x1B[37;1m",
+	.valueStop          = "\x1B[0m",
+	.enumStart          = "/\x1B[92m",
+	.enumStop           = "\x1B[0m",
+	.unknownStart       = "\x1B[31;1m",
+	.unknownStop        = "\x1B[0m"
 };
 
 // msgTypePos = offset of 35=

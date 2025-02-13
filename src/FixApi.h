@@ -271,7 +271,7 @@ class Iterator
 
 // underlying types :
 typedef Float      AMT;
-typedef bool       BOOLEAN;
+typedef char       BOOLEAN;
 typedef char       CHAR;
 typedef sohstr     COUNTRY;
 typedef sohstr     CURRENCY;
