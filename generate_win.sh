@@ -8,7 +8,7 @@ set mydir=%~dp0
 
 :: Funzione di uso
 :usage
-echo Usage: %~nx0 [--clean-fields] -i include-prefix -n namespace -s def-source-dir -d destination-dir [-p gdb-pp-dir]
+echo Usage: %~nx0 [--clean-fields] -c preprocessor-path -i include-prefix -n namespace -s def-source-dir -d destination-dir [-p gdb-pp-dir]
 exit /b 1
 
 :: Parsing degli argomenti
